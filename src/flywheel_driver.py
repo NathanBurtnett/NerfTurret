@@ -1,10 +1,10 @@
 import pyb
 
+
 class Flywheel:
-    def __init__(self, pwm_pin, freq=1000):
+    def __init__(self, pwm_pin, freq=200):
         # Configure PWM output pin
         self.pwm = pyb.PWM(pwm_pin, freq=freq)
-        self.pwm_percent = 0.0
         self.max_pulse_width = 2000
         self.min_pulse_width = 1000
 
@@ -13,13 +13,13 @@ class Flywheel:
         self.set_percent(min_percent)
 
     def set_percent(self, percent):
-        # Make sure throttle is within range
-        percent = max(0.0, min(100.0, percent))
-        # Convert percent from float in [0.0, 100.0] to PWM duty cycle in [0, 1023]
-        duty_cycle = int(percent * 10.23)
-        self.pwm_percent = percent
-        self.pwm.duty(duty_cycle)
+        if percent > 100:
+            percent = 100
+        elif percent < 0:
+            percent = 0
+        pulse_width = percent * self.max_pulse_width
+        self.pwm_pin.pulse_width(pulse_width / 100)
 
     def release(self):
-        # Release PWM output pin
-        self.pwm.deinit()
+        # Set to minimum motor speed
+        self.pwm.pin.pulse_width(self.min_pulse_width)
