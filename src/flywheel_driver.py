@@ -5,6 +5,8 @@ class Flywheel:
         # Configure PWM output pin
         self.pwm = pyb.PWM(pwm_pin, freq=freq)
         self.pwm_percent = 0.0
+        self.max_pulse_width = 2000
+        self.min_pulse_width = 1000
 
     def arm(self, min_percent=5.0):
         # Set throttle to minimum for a few seconds to arm the ESC
