@@ -43,9 +43,8 @@ PB_10: Servo PWM
 """
 
 def yaw(shares):
-    if state == 0:  # INTIALIZE
-        yawmotor= MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
-        yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
+    yawmotor= MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
+    yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
 
     yield 0
 
@@ -64,7 +63,7 @@ def camera(shares):
 
 def firing_pin(shares):
     state = shares
-    servo = Servo(pyb.Pin.board.PB4)
+    servo = pyb.Servo(pyb.Pin.board.PB4)
     if state == 5: #state 5 is fire mode
         servo.set()
         state = 4
