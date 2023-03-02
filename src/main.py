@@ -43,6 +43,7 @@ PB_10: Servo PWM
 """
 
 def yaw(shares):
+    state, yawsetpoint = shares
     yawmotor= MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
 
@@ -51,9 +52,10 @@ def yaw(shares):
 def flywheel(shares):
     state, pitch = shares
     flywheel = Flywheel(pyb.Pin.board.PB3)
-    if state == 2: #ARMING
-        flywheel.arm()
-    elif state == 3: #ERROR CORRECTION
+
+    if state == 3: #ERROR CORRECTION
+        flywheel.set_percent(pitch)
+    if state == 10:  # DEMO
         flywheel.set_percent(pitch)
     yield 0
 
@@ -63,31 +65,33 @@ def camera(shares):
 
 def firing_pin(shares):
     state = shares
-    servo = pyb.Servo(pyb.Pin.board.PB4)
+    servo = pyb.Servo(pyb.Pin.board.PB10)
     if state == 5: #state 5 is fire mode
         servo.set()
-        state = 4
+    elif state == 10: #DEMO
+        servo.set()
     else:
         servo.back()
     yield 0
 
 def master_mind(shares):
+    state, yawsetpoint, throttle, pitch = shares
+
 
 
 if __name__ == "__main__":
 
     #Create motor and encoder objects
     state = ts.Share('l', thread_protect = False, name = "FSM State Var")
-    yawKp = ts.Share('f', thread_protect = False, name = "Yaw Motor Kp")
     yawsetpoint = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
     throttle = ts.Share('f', thread_protect = False, name = "Flywheel Throttle")
     pitch = ts.Share('f', thread_protect = False, name = "Flywheel Pitch")
 
     #Setup tasks
     task_list = ct.TaskList()
-    yawTask = ct.Task(yaw(), name = "Yaw Motor Driver", priority=1,
+    yawTask     = ct.Task(yaw(), name = "Yaw Motor Driver", priority=1,
                       period = 100, profile = True, trace = False,
-                      shares = (state))
+                      shares = (state,yawsetpoint))
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel(), name="Flywheel Motor Driver", priority=1,
                       period=100, profile=True, trace=False,
@@ -101,11 +105,14 @@ if __name__ == "__main__":
                          period=100, profile=True, trace=False,
                          shares=(state))
     task_list.append(firingTask)
-    mastermindTask = ct.Task(master_mind(), name="Firing Servo Controller", priority=2,
+    mastermindTask = ct.Task(master_mind(), name="Mastermind", priority=2,
                          period=100, profile=True, trace=False,
-                         shares=(state))
+                         shares=(state,yawsetpoint,throttle,pitch))
     task_list.append(mastermindTask)
 
-    state = 0
+    state.put(10)
     while True:
+        if state == 10:
+
+            pass
         task_list.pri_sched()
