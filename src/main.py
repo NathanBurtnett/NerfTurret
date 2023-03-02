@@ -27,6 +27,21 @@ state 4: Fire
 state 5: Rotate 180 go to state 0
 """
 
+"""!
+Pin Layout
+
+PA_10: Motor Driver Enable Pin
+
+PB_3: Flywheel PWM TIM2_CH2
+PB_4: Motor Driver IN1PIN
+PB_5: Motor Driver IN2PIN
+PB_6: Encoder Pin A
+PB_7: Encoder Pin B
+PB_8: I2C SCL Camera
+PB_9: I2C SDA Camera
+PB_10: Servo PWM 
+"""
+
 def yaw(shares):
     if state == 0:  # INTIALIZE
         yawmotor= MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
@@ -36,17 +51,11 @@ def yaw(shares):
 
 def flywheel(shares):
     state, pitch = shares
-    if state == 0: #INTIALIZE
-        flywheel_upper = Flywheel(pyb.Pin.board.PB3)
-        flywheel_lower = Flywheel(pyb.Pin.board.PB10)
-
-    elif state == 2: #ARMING
-        flywheel_upper.arm()
-        flywheel_lower.arm()
-
+    flywheel = Flywheel(pyb.Pin.board.PB3)
+    if state == 2: #ARMING
+        flywheel.arm()
     elif state == 3: #ERROR CORRECTION
-        flywheel_upper.set_percent(pitch)
-        flywheel_lower.set_percent(pitch)
+        flywheel.set_percent(pitch)
     yield 0
 
 def camera(shares):
