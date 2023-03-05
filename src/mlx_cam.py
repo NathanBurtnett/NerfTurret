@@ -18,9 +18,10 @@ example.
 
 import utime as time
 from machine import Pin, I2C
-from mlx90640 import MLX90640
+from mlx90640 import MLX90640, RefreshRate, REGISTER_MAP
 from mlx90640.calibration import NUM_ROWS, NUM_COLS, IMAGE_SIZE, TEMP_K
-from mlx90640.image import ChessPattern, InterleavedPattern
+from mlx90640.image import ChessPattern, InterleavedPattern, ProcessedImage
+from mlx90640.regmap import CameraInterface
 
 
 class MLX_Cam:
@@ -60,7 +61,6 @@ class MLX_Cam:
         ## A local reference to the image object within the camera driver
         self._image = self._camera.image
 
-
     def ascii_image(self, array, pixel="██", textcolor="0;180;0"):
         """!
         @brief   Show low-resolution camera data as shaded pixels on a text
@@ -99,10 +99,8 @@ class MLX_Cam:
                 print(f"\033[38;2;{pix};{pix};{pix}m{pixel}", end='')
             print(f"\033[38;2;{textcolor}m")
 
-
     ## A "standard" set of characters of different densities to make ASCII art
     asc = " -.:=+*#%@"
-
 
     def ascii_art(self, array):
         """!
@@ -126,7 +124,6 @@ class MLX_Cam:
                     print("><", end='')
             print('')
         return
-
 
     def get_csv(self, array, limits=None):
         """!
@@ -156,7 +153,6 @@ class MLX_Cam:
             yield line
         return
 
-
     def get_image(self):
         """!
         @brief   Get one image from a MLX90640 camera.
@@ -168,8 +164,8 @@ class MLX_Cam:
         """
         for subpage in (0, 1):
             while not self._camera.has_data:
-                time.sleep_ms(50)
                 print('.', end='')
+                time.sleep_ms(10)
             self._camera.read_image(subpage)
             state = self._camera.read_state()
             image = self._camera.process_image(subpage, state)
@@ -194,7 +190,7 @@ if __name__ == "__main__":
 
     # OK, we do have an STM32, so just use the default pin assignments for I2C1
     else:
-        i2c_bus = I2C(1)
+        i2c_bus = I2C(1,  freq=1_000_000)
 
     print("MXL90640 Easy(ish) Driver Test")
 
@@ -206,6 +202,20 @@ if __name__ == "__main__":
     # Create the camera object and set it up in default mode
     camera = MLX_Cam(i2c_bus)
 
+    # Interfacing
+    #interface= CameraInterface(i2c_bus, i2c_address)  # create camera interface object
+    #reg_addr = 0x800D  # address of the register to write to
+    #reg_val = bytearray([0b0001, 0b1001, 0b0000, 0b0001])  # create a byte array with a value of 0
+    #interface.write(reg_addr, reg_val)  # write the value to the register
+
+    MLX90640.refresh_rate.setter(0b010)
+
+
+
+    #MLX90640.refresh_rate.setter(0b111)
+    #print(RefreshRate.get_freq(REGISTER_MAP[0x800D]['refresh_rate']))
+    #print(str(REGISTER_MAP[0x800D][4]))
+
     while True:
         try:
             # Get and image and see how long it takes to grab that image
@@ -214,20 +224,23 @@ if __name__ == "__main__":
             image = camera.get_image()
             print(f" {time.ticks_diff(time.ticks_ms(), begintime)} ms")
 
+            #print(f"{MLX90640.refresh_rate}")
+
             # Can show image.v_ir, image.alpha, or image.buf; image.v_ir best?
             # Display pixellated grayscale or numbers in CSV format; the CSV
             # could also be written to a file. Spreadsheets, Matlab(tm), or
             # CPython can read CSV and make a decent false-color heat plot.
-            show_image = False
-            show_csv = False
-            if show_image:
-                camera.ascii_image(image.buf)
-            elif show_csv:
-                for line in camera.get_csv(image.v_ir, limits=(0, 99)):
-                    print(line)
-            else:
-                camera.ascii_art(image.v_ir)
-            time.sleep_ms(10000)
+            #show_image = False
+            #show_csv = False
+            #if show_image:
+            #    camera.ascii_image(image.buf)
+            #elif show_csv:
+            #    for line in camera.get_csv(image.v_ir, limits=(0, 99)):
+            #        print(line)
+            #else:
+             #   camera.ascii_art(image.v_ir)
+
+            time.sleep_ms(10)
 
         except KeyboardInterrupt:
             break
