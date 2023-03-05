@@ -16,6 +16,7 @@ from mlx90640.calibration import NUM_ROWS, NUM_COLS, IMAGE_SIZE, TEMP_K
 from mlx90640.image import ChessPattern, InterleavedPattern, ProcessedImage
 from mlx90640.regmap import CameraInterface
 from encoder_reader import EncoderReader
+from control import Control
 from motor_driver import MotorDriver
 from servo_driver import Servo
 from flywheel_driver import Flywheel
@@ -53,27 +54,17 @@ def yaw(shares):
     state, yawsetpoint = shares
     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
+
+    while True:
+        con = Control(kp.get(), setpoint.get(), initial_output=0)
     k_p = 0.1  # Proportional gain
     k_i = 0.001  # Integral gain
     integral_error = 0
     prev_error = 0
 
-    while True:
-        if state.get() >= 2:
-            # Calculate error
-            error = yawsetpoint.get() - yawencoder.read()
-
-            # Calculate integral error
-            integral_error += error
-
-            # Calculate control output
-            control_output = k_p * error + k_i * integral_error
-
-            # Set motor speed
-            yawmotor.set_percent(control_output)
-
-            # Save previous error
-            prev_error = error
+    if state.get() >= 2:
+        # Set motor speed
+        yawmotor.set_percent(control_output)
 
         yield 0
 
@@ -83,7 +74,6 @@ def flywheel(shares):
     if state >= 3: #ERROR CORRECTION
         flywheel.set_percent(throttle)
     yield 0
-
 
 def camera(shares):
     state, yawsetpoint = shares
@@ -152,6 +142,7 @@ if __name__ == "__main__":
     #Create motor and encoder objects
     state = ts.Share('l', thread_protect = False, name = "FSM State Var")
     yawsetpoint = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
+
     throttle = ts.Share('f', thread_protect = False, name = "Flywheel Throttle")
     pitch = ts.Share('f', thread_protect = False, name = "Flywheel Pitch")
 
