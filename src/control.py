@@ -28,6 +28,8 @@ class Control:
         self.output = initial_output
         self.times = []
         self.positions = []
+        self.error_prev = 0
+        self.t_prev = 0
 
     def run(self, setpoint, measured_output):
         """!
@@ -38,7 +40,13 @@ class Control:
         :return: The motor effort
         """
         error = setpoint - measured_output
-        motor_actuation = self.Kp * error
+        t = utime.ticks_ms()
+        Kp_control = self.Kp * error
+        Ki_control = self.Ki * error * (t - self.t_prev)
+        Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
+        self.error_prev = error
+        self.t_prev = t
+        motor_actuation = Kp_control + Ki_control + Kd_control
         return motor_actuation
 
     def set_setpoint(self, setpoint):
@@ -52,6 +60,18 @@ class Control:
         Sets the value of Kp to be part of self.
         """
         self.Kp = Kp
+
+    def set_Kp(self, Ki):
+        """!
+        Sets the value of Ki to be part of self.
+        """
+        self.Ki = Ki
+
+    def set_Kp(self, Kd):
+        """!
+        Sets the value of Kd to be part of self.
+        """
+        self.Kd = Kd
 
     def print_time(self):
         """!

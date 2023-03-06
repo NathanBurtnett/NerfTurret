@@ -75,6 +75,8 @@ MLX90640.refresh_rate.setter(0b010)
 #             while reset.get() == 0:
 #                 con.set_setpoint(setpoint.get())
 #                 con.set_Kp(kp.get())
+#                 con.set_Ki(ki.get())
+#                 con.set_Kd(kd.get())
 #
 #                 measured_output = -enc0.read()
 #                 motor_actuation = con.run(setpoint.get(), measured_output)
@@ -92,50 +94,50 @@ MLX90640.refresh_rate.setter(0b010)
 #         flywheel.set_percent(throttle)
 #     yield 0
 
-def camera(shares):
-    state, yawsetpoint, cam = shares
+# def camera(shares):
+#     state, yawsetpoint, cam = shares
+#
+#     if state >= 3:
+#         # Get the camera image and calculate the error between the center of the image
+#         # and the current yaw position
+#         print("Click.", end='')
+#         begintime = time.ticks_ms()
+#         image = cam.get_image()
+#         print(f" {time.ticks_diff(time.ticks_ms(), begintime)} ms")
+#
+#         # Find the row index and column index of the pixel with the greatest value
+#         max_pixel = max((val, (i, j)) for i, row in enumerate(image) for j, val in enumerate(row))
+#         row_idx, col_idx = max_pixel[1]
+#
+#         # Calculate the vertical center of the screen
+#         center_row = len(image) // 2
+#
+#         # Calculate the error in pixels
+#         error_pixels = abs(row_idx - center_row)
+#
+#         # Convert the error in pixels to encoder counts
+#         camera_width_degrees = 55
+#         encoder_counts = 65535
+#         pixel_size_degrees = camera_width_degrees / len(image[0])
+#         error_degrees = error_pixels * pixel_size_degrees
+#         error = round(error_degrees / camera_width_degrees * encoder_counts)
+#
+#         # Update the yaw setpoint by adding the error to the current setpoint
+#         yawsetpoint.put(error)
+#         print(error)
+#     pass
 
-    if state >= 3:
-        # Get the camera image and calculate the error between the center of the image
-        # and the current yaw position
-        print("Click.", end='')
-        begintime = time.ticks_ms()
-        image = cam.get_image()
-        print(f" {time.ticks_diff(time.ticks_ms(), begintime)} ms")
 
-        # Find the row index and column index of the pixel with the greatest value
-        max_pixel = max((val, (i, j)) for i, row in enumerate(image) for j, val in enumerate(row))
-        row_idx, col_idx = max_pixel[1]
-
-        # Calculate the vertical center of the screen
-        center_row = len(image) // 2
-
-        # Calculate the error in pixels
-        error_pixels = abs(row_idx - center_row)
-
-        # Convert the error in pixels to encoder counts
-        camera_width_degrees = 55
-        encoder_counts = 65535
-        pixel_size_degrees = camera_width_degrees / len(image[0])
-        error_degrees = error_pixels * pixel_size_degrees
-        error = round(error_degrees / camera_width_degrees * encoder_counts)
-
-        # Update the yaw setpoint by adding the error to the current setpoint
-        yawsetpoint.put(error)
-        print(error)
-    pass
-
-
-# def firing_pin(shares):
-#     state = shares
-#     servo = pyb.Servo(pyb.Pin.board.PB10)
-#     if state == 5: #state 5 is fire mode
-#         servo.set()
-#     elif state == 10: #DEMO
-#         servo.set()
-#     else:
-#         servo.back()
-#     yield 0
+def firing_pin(shares):
+    state = shares
+    servo = pyb.Servo(pyb.Pin.board.PB10)
+    if state == 5: #state 5 is fire mode
+        servo.set()
+    elif state == 10: #DEMO
+        servo.set()
+    else:
+        servo.back()
+    yield 0
 
 
 if __name__ == "__main__":
