@@ -113,21 +113,29 @@ PB_10: Servo PWM
 #
 #         yield 0
 
-def flywheel(shares):
-    instructions = shares
-    state = 0
-    flywheel = Flywheel(pyb.Pin.board.PB_3)
-    flywheel.set_speed(1000)
-    print("Starting Flywheel")
-    while True:
-        #Check State via Instructions
-        if instructions.get() == 1:
-            state = 1
-            instructions.put(0)
-        elif state == 1: # Throttle
-            print("Fire Servo")
-            flywheel.set_speed(1000)
-        yield 0
+# def flywheel(shares):
+#     instructions = shares
+#     state = 0
+#     flywheel = Flywheel(pyb.Pin.board.PB3)
+#     flywheel.set_speed(1000)
+#     print("Starting Flywheel")
+#     starttime = time.ticks_ms()
+#     while True:
+#         #Check State via Instructions
+#
+#         if instructions.get() == 1:
+#             state = 1
+#             instructions.put(0)
+#         if starttime + 10000 <= time.ticks_ms():
+#             state = 2
+#
+#         if state == 1: # Throttle
+#             print("Running")
+#             flywheel.set_speed(1000)
+#         elif state == 2: # Throttle
+#             print("Running")
+#             flywheel.set_speed(1400)
+#         yield 0
 
 # def camera(shares):
 #     state, yawsetpoint, cam = shares
@@ -193,8 +201,6 @@ if __name__ == "__main__":
     instructions = ts.Share('l', thread_protect = False, name = "FSM State Var")
     yawsetpoint = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
     yawkp = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
-    throttle = ts.Share('f', thread_protect = False, name = "Flywheel Throttle")
-    pitch = ts.Share('f', thread_protect = False, name = "Flywheel Pitch")
 
     #Setup tasks
     print("Creating Task List")
@@ -210,7 +216,7 @@ if __name__ == "__main__":
     # task_list.append(cameraTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
                            period=1000, profile=True, trace=False,
-                           shares=(state, pitch, throttle))
+                           shares=(instructions))
     task_list.append(flywheelTask)
     # firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
     #                      period=1000, profile=True, trace=False,
