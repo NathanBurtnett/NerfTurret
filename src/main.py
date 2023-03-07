@@ -72,11 +72,13 @@ PB_10: Servo PWM
 #
 #     if state.get() >= 2:
 #         while True:
-#             con = Control(kp.get(), setpoint.get(), initial_output=0)
+#             con = Control(kp.get(), ki.get(), kd.get(), setpoint.get(), initial_output=0)
 #
 #             while reset.get() == 0:
 #                 con.set_setpoint(setpoint.get())
 #                 con.set_Kp(kp.get())
+#                 con.set_Ki(ki.get())
+#                 con.set_Kd(kd.get())
 #
 #                 measured_output = -enc0.read()
 #                 motor_actuation = con.run(setpoint.get(), measured_output)
@@ -152,6 +154,7 @@ def firing_pin(shares):
             current_time = time.ticks_ms()
 
         yield 0
+
 
 
 if __name__ == "__main__":
