@@ -13,7 +13,7 @@ class Control:
     initial conditions of the motor, calculates the error between
     current position and desired position, and returns the motor effort.
     """
-    def __init__(self, Kp, Ki, Kd, setpoint, initial_output):
+    def __init__(self, Kp, Ki, Kd, setpoint):
         """!
         The initial state of the controller. Sets up the initial conditions of the
         passed through motor
@@ -27,7 +27,7 @@ class Control:
         self.Ki = Ki
         self.Kd = Kd
         self.setpoint = setpoint
-        self.output = initial_output
+        #self.output = initial_output
         self.times = []
         self.positions = []
         self.error_prev = 0

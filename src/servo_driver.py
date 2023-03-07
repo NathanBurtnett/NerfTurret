@@ -9,11 +9,11 @@ class Servo:
         self.set_angle(0)
 
     def set_angle(self, angle):
-        pulse_width = int((angle + 90) / 180.0 * (self.max_pulse_width - self.min_pulse_width) + self.min_pulse_width)
-        self.ch.pulse_width(pulse_width)
+        pulse_width = int((angle) / 180.0 * (self.max_pulse_width - self.min_pulse_width) + self.min_pulse_width)
+        self.ch.pulse_width(pulse_width*100)
 
     def set(self):
-        self.set_angle(90)
+        self.set_angle(110)
 
     def back(self):
-        self.set_angle(0)
+        self.set_angle(75)

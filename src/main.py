@@ -62,30 +62,35 @@ PB_10: Servo PWM
 # gc.collect()
 # print(f"Free Mem: {gc.mem_free()}")
 # cam._camera.refresh_rate(2)
-
- def yaw(shares):
-     instructions = shares
-     state = 0
-     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
-     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
-     yawkp = 5
-     yawki = .5
-     yawkd = .01
-     deg2enc = 44.4444
-     while True:
-         con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output=0)
-         if instructions.get() == 1:
-             state = 1
-             instructions.put(0)
-         elif state == 1:
-             # Turn 180
-             measured_output = EncoderReader.read()
-             setpoint = con.set_setpoint(180*deg2enc)
-             con.run(setpoint, measured_output)
-             state = 2
-         elif state == 2:
-             # Adjust via the camera
-             pass
+# def yaw(shares):
+#     instructions, yawsetpoint = shares
+#     state = 0
+#     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
+#     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
+#     yawkp = 5
+#     yawki = .5
+#     yawkd = .01
+#     deg2enc = 44.4444
+#     while True:
+#          con = Control(yawkp, yawki, yawkd, yawsetpoint)
+#          if instructions.get() == 1:
+#              print("Yaw Started")
+#              state = 1
+#              instructions.put(2)
+#          elif state == 1:
+#              # Turn 180
+#              print("Yaw 180")
+#              measured_output = yawencoder.read()
+#              print("Got Output")
+#              motor_actuation = con.run(180*deg2enc, measured_output)
+#              print("Got Setpoint")
+#              yawmotor.set_duty_cycle(motor_actuation)
+#              print("Set Duty Cycle")
+#              state = 2
+#          elif state == 2:
+#              # Adjust via the camera
+#              print("Restart Motor")
+#          yield 0
          
 #
 #
@@ -108,12 +113,21 @@ PB_10: Servo PWM
 #
 #         yield 0
 
-# def flywheel(shares):
-#     state, speed, throttle = shares
-#     flywheel = Flywheel(pyb.Pin.board.PB3)
-#     if state >= 3: #ERROR CORRECTION
-#         flywheel.set_percent(throttle)
-#     yield 0
+def flywheel(shares):
+    instructions = shares
+    state = 0
+    flywheel = Flywheel(pyb.Pin.board.PB_3)
+    flywheel.set_speed(1000)
+    print("Starting Flywheel")
+    while True:
+        #Check State via Instructions
+        if instructions.get() == 1:
+            state = 1
+            instructions.put(0)
+        elif state == 1: # Throttle
+            print("Fire Servo")
+            flywheel.set_speed(1000)
+        yield 0
 
 # def camera(shares):
 #     state, yawsetpoint, cam = shares
@@ -148,35 +162,33 @@ PB_10: Servo PWM
 #         print(error)
 #     pass
 
-
-def firing_pin(shares):
-    instructions = shares
-    state = 0
-    servo = Servo(pyb.Pin.board.PB10)
-    print("Starting Servo")
-    while True:
-        #Check State via Instructions
-        if instructions.get() == 1:
-            state = 1
-            instructions.put(0)
-        elif state == 1: # Fire
-            print("Fire Servo")
-            servo.set()
-            ctime = time.ticks_ms()
-            state = 2
-        elif state == 2: # Delay
-            print("Wait for Servo")
-            if ctime + 1000 <= time.ticks_ms():
-                state = 3
-        elif state == 3: # Return
-            print("Return Servo")
-            servo.back()
-            state = 0
-            instructions.put(1)
-        yield 0
+# def firing_pin(shares):
+#     instructions = shares
+#     state = 0
+#     servo = Servo(pyb.Pin.board.PB10)
+#     print("Starting Servo")
+#     while True:
+#         #Check State via Instructions
+#         if instructions.get() == 1:
+#             state = 1
+#             instructions.put(0)
+#         elif state == 1: # Fire
+#             print("Fire Servo")
+#             servo.set()
+#             ctime = time.ticks_ms()
+#             state = 2
+#         elif state == 2: # Delay
+#             print("Wait for Servo")
+#             if ctime + 1000 <= time.ticks_ms():
+#                 state = 3
+#         elif state == 3: # Return
+#             print("Return Servo")
+#             servo.back()
+#             state = 0
+#             instructions.put(1)
+#         yield 0
 
 if __name__ == "__main__":
-
     #Create motor and encoder objects
     instructions = ts.Share('l', thread_protect = False, name = "FSM State Var")
     yawsetpoint = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
@@ -185,25 +197,27 @@ if __name__ == "__main__":
     pitch = ts.Share('f', thread_protect = False, name = "Flywheel Pitch")
 
     #Setup tasks
+    print("Creating Task List")
     task_list = ct.TaskList()
     # yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=1,
-    #                   period=1000, profile=True, trace=False,
-    #                   shares=(state, yawsetpoint))
+    #                   period=1000, profile=False, trace=False,
+    #                   shares=(instructions, yawsetpoint))
     # task_list.append(yawTask)
+    # print("Yaw Task Created")
     # cameraTask = ct.Task(camera, name="Camera Controller", priority=2,
     #                      period=2000, profile=False, trace=False,
     #                      shares=(state, yawsetpoint, cam))
     # task_list.append(cameraTask)
-    #
-    # flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
-    #                        period=1000, profile=True, trace=False,
-    #                        shares=(state, pitch, throttle))
-    # task_list.append(flywheelTask)
-    #
-    firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
-                         period=5000, profile=True, trace=False,
-                         shares=(instructions))
-    task_list.append(firingTask)
+    flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
+                           period=1000, profile=True, trace=False,
+                           shares=(state, pitch, throttle))
+    task_list.append(flywheelTask)
+    # firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
+    #                      period=1000, profile=True, trace=False,
+    #                      shares=(instructions))
+    # task_list.append(firingTask)
+
+    print("Demo Instructions")
     instructions.put(1)
     while True:
         task_list.pri_sched()

@@ -35,7 +35,8 @@ class MLX_Cam:
         """!
         @brief   Set up an MLX90640 camera.
         @param   i2c An I2C bus which has been set up to talk to the camera;
-                 this must be a bu       @param   address The address of the camera on the I2C bus (default 0x33)
+                 this must be a bus object which has already been set up
+        @param   address The address of the camera on the I2C bus (default 0x33)
         @param   pattern The way frames are interleaved, as we read only half
                  the pixels at a time (default ChessPattern)
         @param   width The width of the image in pixels; leave it at default
@@ -169,8 +170,7 @@ class MLX_Cam:
             state = self._camera.read_state()
             image = self._camera.process_image(subpage, state)
 
-        return images object which has already been set up
-
+        return image
 
 
 # The test code sets up the sensor, then grabs and shows an image in a terminal
