@@ -63,11 +63,30 @@ PB_10: Servo PWM
 # print(f"Free Mem: {gc.mem_free()}")
 # cam._camera.refresh_rate(2)
 
-# def yaw(shares):
-#     state, yawsetpoint = shares
-#     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
-#     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
-#
+ def yaw(shares):
+     instructions = shares
+     state = 0
+     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
+     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
+     yawkp = 5
+     yawki = .5
+     yawkd = .01
+     deg2enc = 44.4444
+     while True:
+         con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output=0)
+         if instructions.get() == 1:
+             state = 1
+             instructions.put(0)
+         elif state == 1:
+             # Turn 180
+             measured_output = EncoderReader.read()
+             setpoint = con.set_setpoint(180*deg2enc)
+             con.run(setpoint, measured_output)
+             state = 2
+         elif state == 2:
+             # Adjust via the camera
+             pass
+         
 #
 #
 #     if state.get() >= 2:
