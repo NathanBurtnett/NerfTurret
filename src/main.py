@@ -137,16 +137,15 @@ def firing_pin(shares):
     while True:
         #Check State via Instructions
         if instructions.get() == 1:
-
-        if state == 0: # Wait
-
             state = 1
+            instructions.put(0)
         elif state == 1: # Fire
             servo.set()
             state = 2
         elif state == 2: # Delay
-
-            state = 3
+            ctime = time.ticks_ms()
+            if ctime + 500 <= time.ticks_ms():
+                state = 3
         elif state == 3: # Return
             servo.back()
             state = 0
