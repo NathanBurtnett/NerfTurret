@@ -7,7 +7,6 @@
 
 import pyb
 import sys
-import utime as time
 import cotask as ct
 import task_share as ts
 from encoder_reader import EncoderReader
@@ -16,15 +15,13 @@ from motor_driver import MotorDriver
 from servo_driver import Servo
 from flywheel_driver import Flywheel
 from mlx_cam import MLX_Cam
-
+import gc
 import utime as time
 from machine import Pin, I2C
 from mlx90640 import MLX90640, RefreshRate, REGISTER_MAP
 from mlx90640.calibration import NUM_ROWS, NUM_COLS, IMAGE_SIZE, TEMP_K
 from mlx90640.image import ChessPattern, InterleavedPattern, ProcessedImage
 from mlx90640.regmap import CameraInterface
-
-
 
 """!
 State Machine
@@ -52,14 +49,19 @@ PB_9: I2C SDA Camera
 PB_10: Servo PWM 
 """
 
-i2c_bus = I2C(1, freq=1_000_000)
-# Select MLX90640 camera I2C address, normally 0x33, and check the bus
-scanhex = [f"0x{addr:X}" for addr in i2c_bus.scan()]
-print(f"I2C Scan: {scanhex}")
-
-# Create the camera object and set it up in default mode
-cam = MLX_Cam(i2c_bus)
-MLX90640.refresh_rate.setter(0b010)
+# i2c_bus = I2C(1, freq = 1000000)
+# # Select MLX90640 camera I2C address, normally 0x33, and check the bus
+# scanhex = [f"0x{addr:X}" for addr in i2c_bus.scan()]
+# print(f"I2C Scan: {scanhex}")
+#
+# # Create the camera object and set it up in default mode
+#
+# gc.collect()
+# print(f"Free Mem: {gc.mem_free()}")
+# cam = MLX_Cam(i2c_bus)
+# gc.collect()
+# print(f"Free Mem: {gc.mem_free()}")
+# cam._camera.refresh_rate(2)
 
 # def yaw(shares):
 #     state, yawsetpoint = shares
@@ -84,7 +86,7 @@ MLX90640.refresh_rate.setter(0b010)
 #                 yield 0
 #
 #         yield 0
-#
+
 # def flywheel(shares):
 #     state, speed, throttle = shares
 #     flywheel = Flywheel(pyb.Pin.board.PB3)
@@ -92,50 +94,64 @@ MLX90640.refresh_rate.setter(0b010)
 #         flywheel.set_percent(throttle)
 #     yield 0
 
-def camera(shares):
-    state, yawsetpoint, cam = shares
+# def camera(shares):
+#     state, yawsetpoint, cam = shares
+#
+#     if state >= 3:
+#         # Get the camera image and calculate the error between the center of the image
+#         # and the current yaw position
+#         print("Click.", end='')
+#         begintime = time.ticks_ms()
+#         image = cam.get_image()
+#         print(f" {time.ticks_diff(time.ticks_ms(), begintime)} ms")
+#
+#         # Find the row index and column index of the pixel with the greatest value
+#         max_pixel = max((val, (i, j)) for i, row in enumerate(image) for j, val in enumerate(row))
+#         row_idx, col_idx = max_pixel[1]
+#
+#         # Calculate the vertical center of the screen
+#         center_row = len(image) // 2
+#
+#         # Calculate the error in pixels
+#         error_pixels = abs(row_idx - center_row)
+#
+#         # Convert the error in pixels to encoder counts
+#         camera_width_degrees = 55
+#         encoder_counts = 65535
+#         pixel_size_degrees = camera_width_degrees / len(image[0])
+#         error_degrees = error_pixels * pixel_size_degrees
+#         error = round(error_degrees / camera_width_degrees * encoder_counts)
+#
+#         # Update the yaw setpoint by adding the error to the current setpoint
+#         yawsetpoint.put(error)
+#         print(error)
+#     pass
 
-    if state >= 3:
-        # Get the camera image and calculate the error between the center of the image
-        # and the current yaw position
-        print("Click.", end='')
-        begintime = time.ticks_ms()
-        image = cam.get_image()
-        print(f" {time.ticks_diff(time.ticks_ms(), begintime)} ms")
 
-        # Find the row index and column index of the pixel with the greatest value
-        max_pixel = max((val, (i, j)) for i, row in enumerate(image) for j, val in enumerate(row))
-        row_idx, col_idx = max_pixel[1]
+def firing_pin(shares):
+    instructions = shares
+    state = 0
+    servo = Servo(pyb.Pin.board.PB10)
+    while True:
+        #Check State via Instructions
+        if instructions.get() == 1:
 
-        # Calculate the vertical center of the screen
-        center_row = len(image) // 2
+        if state == 0: # Wait
 
-        # Calculate the error in pixels
-        error_pixels = abs(row_idx - center_row)
+            state = 1
+        elif state == 1: # Fire
+            servo.set()
+            state = 2
+        elif state == 2: # Delay
 
-        # Convert the error in pixels to encoder counts
-        camera_width_degrees = 55
-        encoder_counts = 65535
-        pixel_size_degrees = camera_width_degrees / len(image[0])
-        error_degrees = error_pixels * pixel_size_degrees
-        error = round(error_degrees / camera_width_degrees * encoder_counts)
+            state = 3
+        elif state == 3: # Return
+            servo.back()
+            state = 0
 
-        # Update the yaw setpoint by adding the error to the current setpoint
-        yawsetpoint.put(error)
-        print(error)
-    pass
+            current_time = time.ticks_ms()
 
-
-# def firing_pin(shares):
-#     state = shares
-#     servo = pyb.Servo(pyb.Pin.board.PB10)
-#     if state == 5: #state 5 is fire mode
-#         servo.set()
-#     elif state == 10: #DEMO
-#         servo.set()
-#     else:
-#         servo.back()
-#     yield 0
+        yield 0
 
 
 if __name__ == "__main__":
@@ -153,9 +169,8 @@ if __name__ == "__main__":
     #                   period=1000, profile=True, trace=False,
     #                   shares=(state, yawsetpoint))
     # task_list.append(yawTask)
-
     cameraTask = ct.Task(camera, name="Camera Controller", priority=2,
-                         period=1000, profile=True, trace=False,
+                         period=2000, profile=False, trace=False,
                          shares=(state, yawsetpoint, cam))
     task_list.append(cameraTask)
     #
@@ -165,10 +180,9 @@ if __name__ == "__main__":
     # task_list.append(flywheelTask)
     #
     # firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
-    #                      period=1000, profile=True, trace=False,
-    #                      shares=(state, yawsetpoint))
+    #                      period=2000, profile=True, trace=False,
+    #                      shares=(state))
     # task_list.append(firingTask)
 
-    state.put(10)
     while True:
         task_list.pri_sched()

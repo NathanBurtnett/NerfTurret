@@ -35,8 +35,7 @@ class MLX_Cam:
         """!
         @brief   Set up an MLX90640 camera.
         @param   i2c An I2C bus which has been set up to talk to the camera;
-                 this must be a bus object which has already been set up
-        @param   address The address of the camera on the I2C bus (default 0x33)
+                 this must be a bu       @param   address The address of the camera on the I2C bus (default 0x33)
         @param   pattern The way frames are interleaved, as we read only half
                  the pixels at a time (default ChessPattern)
         @param   width The width of the image in pixels; leave it at default
@@ -170,7 +169,8 @@ class MLX_Cam:
             state = self._camera.read_state()
             image = self._camera.process_image(subpage, state)
 
-        return image
+        return images object which has already been set up
+
 
 
 # The test code sets up the sensor, then grabs and shows an image in a terminal
@@ -201,20 +201,6 @@ if __name__ == "__main__":
 
     # Create the camera object and set it up in default mode
     camera = MLX_Cam(i2c_bus)
-
-    # Interfacing
-    #interface= CameraInterface(i2c_bus, i2c_address)  # create camera interface object
-    #reg_addr = 0x800D  # address of the register to write to
-    #reg_val = bytearray([0b0001, 0b1001, 0b0000, 0b0001])  # create a byte array with a value of 0
-    #interface.write(reg_addr, reg_val)  # write the value to the register
-
-    MLX90640.refresh_rate.setter(0b010)
-
-
-
-    #MLX90640.refresh_rate.setter(0b111)
-    #print(RefreshRate.get_freq(REGISTER_MAP[0x800D]['refresh_rate']))
-    #print(str(REGISTER_MAP[0x800D][4]))
 
     while True:
         try:
