@@ -41,7 +41,6 @@ def yaw(shares):
     yawkp = .005
     yawki = .0005
     yawkd = .001
-    deg2enc = 44.4444
     yawmotor.set_duty_cycle(0)
     motor_actuation = 0
     while True:

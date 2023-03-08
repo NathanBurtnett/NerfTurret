@@ -32,6 +32,8 @@ class Control:
         self.positions = []
         self.error_prev = 0
         self.t_prev = 0
+        self.deg2enc = 44.4444
+        self.gearRatio = 150 / 16
 
     def run(self, setpoint, measured_output):
         """!
@@ -41,10 +43,11 @@ class Control:
         :param measured_output: The measured position of the encoder
         :return: The motor effort
         """
+
         error = setpoint - measured_output
         t = utime.ticks_ms()
         Kp_control = self.Kp * error
-        Ki_control = self.Ki * error * (t - self.t_prev)
+        Ki_control += self.Ki * error * (t - self.t_prev)
         Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
         self.error_prev = error
         self.t_prev = t
@@ -57,7 +60,8 @@ class Control:
         """!
         Sets the value of setpoint to be part of self.
         """
-        self.setpoint = setpoint
+        deg = setpoint * self.deg2enc * self.gearRatio
+        self.setpoint = deg
 
     def set_Kp(self, Kp):
         """!
