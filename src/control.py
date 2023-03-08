@@ -32,6 +32,8 @@ class Control:
         self.positions = []
         self.error_prev = 0
         self.t_prev = 0
+        self.deg2enc = 44.4444
+        self.gearRatio = 150 / 16
 
     def run(self, setpoint, measured_output):
         """!
@@ -57,7 +59,8 @@ class Control:
         """!
         Sets the value of setpoint to be part of self.
         """
-        self.setpoint = setpoint
+        deg = setpoint * self.deg2enc * self.gearRatio
+        self.setpoint = deg
 
     def set_Kp(self, Kp):
         """!

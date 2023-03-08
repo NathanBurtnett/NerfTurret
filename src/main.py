@@ -37,10 +37,9 @@ def yaw(shares):
     yawsetpoint, yawcon = shares
     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
-    yawkp = 5
-    yawki = .5
-    yawkd = .01
-    deg2enc = 44.4444
+    yawkp = .005
+    yawki = .0005
+    yawkd = .001
     yawmotor.set_duty_cycle(0)
     while True:
         con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output = 0)
