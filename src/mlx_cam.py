@@ -201,6 +201,7 @@ if __name__ == "__main__":
 
     # Create the camera object and set it up in default mode
     camera = MLX_Cam(i2c_bus)
+    # cam._camera.refresh_rate(2)
 
     while True:
         try:
