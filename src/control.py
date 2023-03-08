@@ -41,16 +41,16 @@ class Control:
         :param measured_output: The measured position of the encoder
         :return: The motor effort
         """
-        # error = setpoint - measured_output
-        # t = utime.ticks_ms()
-        # Kp_control = self.Kp * error
-        # Ki_control = self.Ki * error * (t - self.t_prev)
-        # Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
-        # self.error_prev = error
-        # self.t_prev = t
-        # motor_actuation = Kp_control + Ki_control + Kd_control
         error = setpoint - measured_output
-        motor_actuation = self.Kp * error
+        t = utime.ticks_ms()
+        Kp_control = self.Kp * error
+        Ki_control = self.Ki * error * (t - self.t_prev)
+        Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
+        self.error_prev = error
+        self.t_prev = t
+        motor_actuation = Kp_control + Ki_control + Kd_control
+        # error = setpoint - measured_output
+        # motor_actuation = self.Kp * error
         return motor_actuation
 
     def set_setpoint(self, setpoint):

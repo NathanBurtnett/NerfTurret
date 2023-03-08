@@ -33,34 +33,38 @@ PB_9: I2C SDA Camera
 PB_10: Servo PWM 
 """
 
+
 def yaw(shares):
     yawsetpoint, yawcon = shares
     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
-    yawkp = 5
-    yawki = .5
-    yawkd = .01
+    yawkp = .005
+    yawki = .0005
+    yawkd = .001
     deg2enc = 44.4444
     yawmotor.set_duty_cycle(0)
+    motor_actuation = 0
     while True:
-        con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output = 0)
+        con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output=0)
         measured_output = -yawencoder.read()
-        if yawcon.get() == 1: # Turn 180
+        if yawcon.get() == 1:  # Turn 180
             print("Turning 180")
             yawsetpoint.put(180)
             motor_actuation = con.run(yawsetpoint.get(), measured_output)
+            print(motor_actuation)
             yawsetpoint.put(0)
-            yawcon.put(2)
-        elif yawcon.get() == 2: # Turn -180
+            yawcon.put(0)
+        elif yawcon.get() == 2:  # Turn -180
             print("Turning -180")
             yawsetpoint.put(-180)
             motor_actuation = con.run(yawsetpoint.get(), measured_output)
             yawsetpoint.put(0)
             yawcon.put(0)
-        elif yawcon.get() == 3: # Track
+        elif yawcon.get() == 3:  # Track
             pass
         yawmotor.set_duty_cycle(motor_actuation)
         yield 0
+
 
 def flywheel(shares):
     speedinput, pitch = shares
@@ -70,47 +74,50 @@ def flywheel(shares):
     flywheelL = Flywheel(pyb.Pin.board.PA2)
     while True:
         flywheelU.set_speed(speedinput.get())
-        flywheelL.set_speed(speedinput.get()*pitch.get())
+        flywheelL.set_speed(speedinput.get() * pitch.get())
         yield 0
+
 
 def firing_pin(shares):
     fire = shares
     state = 0
     servo = Servo(pyb.Pin.board.PB10)
     while True:
-        if fire.get() == 1: # Fire
+        if fire.get() == 1:  # Fire
             servo.set()
             state = 1
             fire.put(0)
             ctime = time.ticks_ms()
-        if state == 1: # Delay
+        if state == 1:  # Delay
             if ctime + 1000 <= time.ticks_ms():
                 state = 2
-        elif state == 2: # Return
+        elif state == 2:  # Return
             servo.back()
             state = 0
         yield 0
 
-def camera(shares):
-    = shares
-    while True:
-        # Configure the UART
-        uart = pyb.UART(2, baudrate=115200, tx=pyb.Pin.board.PA2, rx=pyb.Pin.board.PA3)
 
-        # Read the response from the serial port
-        response = uart.readline()
-        print(response)
+def camera(shares):
+    yawsetpoint = shares
+    cam = pyb.UART(4, 115200, timeout=5000)
+    while True:
+        response = cam.readline()
+        if response:
+            fields = response.decode().strip().split(',')
+            # Process the CSV data here
+            print(fields)
         yield 0
 
+
 if __name__ == "__main__":
-    #Create motor and encoder objects
+    # Create motor and encoder objects
     fire = ts.Share('l', thread_protect=False, name="Servo Actuation Flag")
     fire.put(0)
-    yawcon = ts.Share('l', thread_protect=False, name="Turn 180 Flag") #[1: Turn 180] [2: Turn -180]
+    yawcon = ts.Share('l', thread_protect=False, name="Turn 180 Flag")  # [1: Turn 180] [2: Turn -180]
     yawcon.put(0)
     speed = ts.Share('l', thread_protect=False, name="Flywheel Base Speed")
     pitchPerc = ts.Share('l', thread_protect=False, name="Flywheel Differential Perfentage")
-    yawsetpoint = ts.Share('l', thread_protect = False, name = "Yaw Motor setpoint")
+    yawsetpoint = ts.Share('l', thread_protect=False, name="Yaw Motor setpoint")
 
     task_list = ct.TaskList()
     yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=1,
@@ -119,20 +126,18 @@ if __name__ == "__main__":
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
                            period=100, profile=True, trace=False,
-                           shares=(speed,pitchPerc))
+                           shares=(speed, pitchPerc))
     task_list.append(flywheelTask)
     firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
                          period=100, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
     cameraTask = ct.Task(camera, name="Camera Controller", priority=2,
-                         period=2000, profile=False, trace=False,
-                         shares=())
-    task_list.append(cameraTask)
+                         period=15, profile=False, trace=False,
+                         shares=(yawsetpoint))
     task_list.append(cameraTask)
 
-
-    #yawcon.put(1)
+    yawcon.put(0)
     starttime = time.ticks_ms()
     while True:
         if starttime + 5000 < time.ticks_ms():
