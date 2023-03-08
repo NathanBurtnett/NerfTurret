@@ -46,7 +46,7 @@ class Control:
         # error = setpoint - measured_output
         # t = utime.ticks_ms()
         # Kp_control = self.Kp * error
-        # Ki_control = self.Ki * error * (t - self.t_prev)
+        # Ki_control += self.Ki * error * (t - self.t_prev)
         # Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
         # self.error_prev = error
         # self.t_prev = t
