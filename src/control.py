@@ -13,7 +13,7 @@ class Control:
     initial conditions of the motor, calculates the error between
     current position and desired position, and returns the motor effort.
     """
-    def __init__(self, Kp, Ki, Kd, setpoint):
+    def __init__(self, Kp, Ki, Kd, setpoint, initial_output):
         """!
         The initial state of the controller. Sets up the initial conditions of the
         passed through motor
@@ -27,7 +27,7 @@ class Control:
         self.Ki = Ki
         self.Kd = Kd
         self.setpoint = setpoint
-        #self.output = initial_output
+        self.output = initial_output
         self.times = []
         self.positions = []
         self.error_prev = 0
@@ -41,14 +41,16 @@ class Control:
         :param measured_output: The measured position of the encoder
         :return: The motor effort
         """
+        # error = setpoint - measured_output
+        # t = utime.ticks_ms()
+        # Kp_control = self.Kp * error
+        # Ki_control = self.Ki * error * (t - self.t_prev)
+        # Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
+        # self.error_prev = error
+        # self.t_prev = t
+        # motor_actuation = Kp_control + Ki_control + Kd_control
         error = setpoint - measured_output
-        t = utime.ticks_ms()
-        Kp_control = self.Kp * error
-        Ki_control = self.Ki * error * (t - self.t_prev)
-        Kd_control = self.Kd * (error - self.error_prev)/(t - self.t_prev)
-        self.error_prev = error
-        self.t_prev = t
-        motor_actuation = Kp_control + Ki_control + Kd_control
+        motor_actuation = self.Kp * error
         return motor_actuation
 
     def set_setpoint(self, setpoint):
