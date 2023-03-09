@@ -40,27 +40,28 @@ def yaw(shares):
     yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
     yawkp = .005
     yawki = .0005
-    yawkd = .001
+    yawkd = .01
     yawmotor.set_duty_cycle(0)
-    motor_actuation = 0
     while True:
-        con = Control(yawkp, yawki, yawkd, yawsetpoint, initial_output=0)
-        measured_output = -yawencoder.read()
+        con = Control(yawkp, yawki, yawkd, yawsetpoint.get(), initial_output=0)
+        measured_output = yawencoder.read()
+        print(f"Motor Position: {measured_output}")
+        motor_actuation = con.run(measured_output)
         if yawcon.get() == 1:  # Turn 180
             print("Turning 180")
-            yawsetpoint.put(180)
-            motor_actuation = con.run(yawsetpoint.get(), measured_output)
-            print(motor_actuation)
-            yawsetpoint.put(0)
+            yawencoder.zero()
+            con.set_setpoint(180)
+            motor_actuation = con.run(measured_output)
             yawcon.put(0)
         elif yawcon.get() == 2:  # Turn -180
             print("Turning -180")
-            yawsetpoint.put(-180)
-            motor_actuation = con.run(yawsetpoint.get(), measured_output)
-            yawsetpoint.put(0)
+            yawencoder.zero()
+            con.set_setpoint(-180)
+            motor_actuation = con.run(measured_output)
             yawcon.put(0)
         elif yawcon.get() == 3:  # Track
             pass
+        print(f"Motor Actuation: {motor_actuation}")
         yawmotor.set_duty_cycle(motor_actuation)
         yield 0
 
@@ -103,10 +104,7 @@ def camera(shares):
         response = cam.readline()
         if response:
             fields = response.decode().strip().split(',')
-            # Process the CSV data here
-            print(fields)
         yield 0
-
 
 if __name__ == "__main__":
     # Create motor and encoder objects
@@ -119,24 +117,24 @@ if __name__ == "__main__":
     yawsetpoint = ts.Share('l', thread_protect=False, name="Yaw Motor setpoint")
 
     task_list = ct.TaskList()
-    yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=1,
-                      period=2000, profile=False, trace=False,
+    yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=2,
+                      period=10, profile=False, trace=False,
                       shares=(yawsetpoint, yawcon))
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
-                           period=100, profile=True, trace=False,
+                           period=10, profile=True, trace=False,
                            shares=(speed, pitchPerc))
     task_list.append(flywheelTask)
     firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
-                         period=100, profile=True, trace=False,
+                         period=10, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
-    cameraTask = ct.Task(camera, name="Camera Controller", priority=2,
-                         period=15, profile=False, trace=False,
+    cameraTask = ct.Task(camera, name="Camera Controller", priority=1,
+                         period=10, profile=False, trace=False,
                          shares=(yawsetpoint))
     task_list.append(cameraTask)
 
-    yawcon.put(0)
+    yawcon.put(1)
     starttime = time.ticks_ms()
     while True:
         if starttime + 5000 < time.ticks_ms():
