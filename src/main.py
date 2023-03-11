@@ -6,7 +6,6 @@
 """
 
 import pyb
-import sys
 import cotask as ct
 import task_share as ts
 from encoder_reader import EncoderReader
@@ -14,16 +13,14 @@ from control import Control
 from motor_driver import MotorDriver
 from servo_driver import Servo
 from flywheel_driver import Flywheel
-from mlx_cam import MLX_Cam
 import utime as time
 
 """!
 Pin Layout
 
 PA_10: Motor Driver Enable Pin
-
-PA_2: Flywheel 1 PWM TIM2_CH3
-PB_3: Flywheel 2 PWM TIM2_CH2
+PB_3: Flywheel 1 PWM TIM2_CH3
+PB_5: Flywheel 2 PWM TIM2_CH2
 PB_4: Motor Driver IN1PIN
 PB_5: Motor Driver IN2PIN
 PB_6: Encoder Pin A
@@ -33,50 +30,48 @@ PB_9: I2C SDA Camera
 PB_10: Servo PWM 
 """
 
-
 def yaw(shares):
-    yawsetpoint, yawcon = shares
+    errorx, yawcon = shares
     yawmotor = MotorDriver(pyb.Pin.board.PA10, pyb.Pin.board.PB4, pyb.Pin.board.PB5, 3)
-    yawencoder = EncoderReader(pyb.Pin.board.PB6, pyb.Pin.board.PB7, 4)
-    yawkp = .005
-    yawki = .0005
-    yawkd = .01
+    yawencoder = EncoderReader(pyb.Pin.board.PC6, pyb.Pin.board.PC7, 8)
+    kp = .0675
+    ki = .0000015
+    kd = .0000015
     yawmotor.set_duty_cycle(0)
+    con = Control(kp, ki, kd, setpoint = 0, initial_output=0)
+    con.set_setpoint(0)
+    yawencoder.zero()
     while True:
-        con = Control(yawkp, yawki, yawkd, yawsetpoint.get(), initial_output=0)
         measured_output = yawencoder.read()
-        print(f"Motor Position: {measured_output}")
-        motor_actuation = con.run(measured_output)
+        yield 0
         if yawcon.get() == 1:  # Turn 180
-            print("Turning 180")
-            yawencoder.zero()
             con.set_setpoint(180)
             motor_actuation = con.run(measured_output)
-            yawcon.put(0)
-        elif yawcon.get() == 2:  # Turn -180
-            print("Turning -180")
-            yawencoder.zero()
-            con.set_setpoint(-180)
+            if -1 < motor_actuation < 1:
+                yawcon.put(3)
+                yield 0
+        elif yawcon.get() == 2:  # back to start
+            con.set_setpoint(0)
             motor_actuation = con.run(measured_output)
-            yawcon.put(0)
+            if -1 < motor_actuation < 1:
+                yawcon.put(0)
+                yield 0
         elif yawcon.get() == 3:  # Track
-            pass
+            motor_actuation = con.track(errorx.get())
+        # print(f"Motor Position: {measured_output}")
         print(f"Motor Actuation: {motor_actuation}")
         yawmotor.set_duty_cycle(motor_actuation)
         yield 0
 
-
 def flywheel(shares):
-    speedinput, pitch = shares
+    speedinput = shares
     speedinput.put(1000)
-    pitch.put(1)
-    flywheelU = Flywheel(pyb.Pin.board.PB3)
-    flywheelL = Flywheel(pyb.Pin.board.PA2)
+    flywheelU = Flywheel(pyb.Pin.board.PB3, 2, 2)
+    flywheelL = Flywheel(pyb.Pin.board.PB5,3, 2)
     while True:
         flywheelU.set_speed(speedinput.get())
-        flywheelL.set_speed(speedinput.get() * pitch.get())
+        flywheelL.set_speed(speedinput.get())
         yield 0
-
 
 def firing_pin(shares):
     fire = shares
@@ -89,22 +84,34 @@ def firing_pin(shares):
             fire.put(0)
             ctime = time.ticks_ms()
         if state == 1:  # Delay
-            if ctime + 1000 <= time.ticks_ms():
+            if ctime + 150 <= time.ticks_ms():
                 state = 2
         elif state == 2:  # Return
             servo.back()
             state = 0
         yield 0
 
-
 def camera(shares):
-    yawsetpoint = shares
-    cam = pyb.UART(4, 115200, timeout=5000)
+    errorx, errory = shares
+    cam = pyb.UART(4, 115200, timeout=0)
     while True:
-        response = cam.readline()
-        if response:
-            fields = response.decode().strip().split(',')
+        if cam.any():
+            response = cam.readline()
+            #print("raw", response)
+            error = response.decode().strip().split(',')
+            if len(error) != 2:
+                #print("Invalid response format:", response)
+                continue  # ignore invalid response and continue
+            try:
+                if abs(float(error[0])) < 16:
+                    errorx.put(float(error[0]))
+                if abs(float(error[1])) < 12:
+                    errory.put(float(error[1]))
+            except ValueError:
+                #print("Invalid value in response:", response)
+                continue  # ignore invalid value and continue
         yield 0
+
 
 if __name__ == "__main__":
     # Create motor and encoder objects
@@ -113,31 +120,51 @@ if __name__ == "__main__":
     yawcon = ts.Share('l', thread_protect=False, name="Turn 180 Flag")  # [1: Turn 180] [2: Turn -180]
     yawcon.put(0)
     speed = ts.Share('l', thread_protect=False, name="Flywheel Base Speed")
-    pitchPerc = ts.Share('l', thread_protect=False, name="Flywheel Differential Perfentage")
-    yawsetpoint = ts.Share('l', thread_protect=False, name="Yaw Motor setpoint")
+    errorx = ts.Share('f', thread_protect=False, name="Camera x Error")
+    errory = ts.Share('f', thread_protect=False, name="Camera y Error")
+    buzzer = ts.Share('l', thread_protect=False, name="Speaker Sound")
+    button = ts.Share('b', thread_protect=False, name="Button Pressed")
 
     task_list = ct.TaskList()
     yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=2,
                       period=10, profile=False, trace=False,
-                      shares=(yawsetpoint, yawcon))
+                      shares=(errorx, yawcon))
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
-                           period=10, profile=True, trace=False,
-                           shares=(speed, pitchPerc))
-    task_list.append(flywheelTask)
+                           period=100, profile=True, trace=False,
+                           shares=(speed))
+    #task_list.append(flywheelTask)
     firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
-                         period=10, profile=True, trace=False,
+                         period=100, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
     cameraTask = ct.Task(camera, name="Camera Controller", priority=1,
                          period=10, profile=False, trace=False,
-                         shares=(yawsetpoint))
+                         shares=(errorx, errory))
     task_list.append(cameraTask)
 
-    yawcon.put(1)
-    starttime = time.ticks_ms()
+    start_time = time.ticks_ms()
+    fire_time = start_time + 5000
+    yawcon.put(3)
     while True:
-        if starttime + 5000 < time.ticks_ms():
-            pass
-            # speed.put(1000)
         task_list.pri_sched()
+        current_time = time.ticks_ms()
+
+        # Main Duel Checks
+        # if button.get() == 1:
+        #     yawcon.put(1)
+        #     speed.put(1200)
+        # if current_time >= fire_time:
+        #     if .1 > errorx.get() > -.1:
+        #         fire.put(1)
+        # if current_time >= fire_time + 1000:
+        #     yawcon.put(2)
+        #     speed.put(1000)
+        #     button.put(0)
+
+        # if current_time >= fire_time:
+        #     fire.put(1)
+        #     fire_time = fire_time + 400  # set fire_time to infinity to prevent further execution
+        # if current_time >= speed_time:
+        #     speed.put(1200)
+        #     speed_time = float('inf')  # set speed_time to infinity to prevent further execution

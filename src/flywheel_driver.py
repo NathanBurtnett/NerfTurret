@@ -2,9 +2,9 @@ import pyb
 
 
 class Flywheel:
-    def __init__(self, pwm_pin, freq=200):
-        self.tim = pyb.Timer(2, freq=freq)
-        self.ch = self.tim.channel(2, pyb.Timer.PWM, pin=pwm_pin)
+    def __init__(self, pwm_pin, timer, channel, freq=200):
+        self.tim = pyb.Timer(timer, freq=freq)
+        self.ch = self.tim.channel(channel, pyb.Timer.PWM, pin=pwm_pin)
         self.min_pulse_width = 700
         self.max_pulse_width = 2500
 

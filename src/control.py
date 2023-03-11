@@ -35,8 +35,8 @@ class Control:
         self.positions = []
         self.error_prev = 0
         self.t_prev = 0
-        self.deg2enc = 44.4444
-        self.gearRatio = 150 / 16
+        self.deg2enc = 16384 / 360
+        self.gearRatio = 200 / 27
 
     def run(self, measured_output):
         """!
@@ -46,13 +46,13 @@ class Control:
         :param measured_output: The measured position of the encoder
         :return: The motor effort
         """
-        print(self.setpoint)
+        print(f"Setpoint: {self.setpoint}")
         error = self.setpoint - measured_output
         if self.t_prev == 0:
             self.t_prev = self.t_start
         t = utime.ticks_ms()
-        print(f"Previous Time: {self.t_prev }")
-        print(f"Current Time: {t}")
+        #print(f"Previous Time: {self.t_prev }")
+        #print(f"Current Time: {t}")
         self.Kp_control = self.Kp * error
         self.Ki_control += self.Ki * error * (t - self.t_prev)
         if self.t_prev != t:
@@ -70,29 +70,26 @@ class Control:
         """
         deg = setpoint * self.deg2enc * self.gearRatio
         self.setpoint = deg
-        print(f"Setpoint: {self.setpoint}")
 
-    def set_Kp(self, Kp):
-        """!
-        Sets the value of Kp to be part of self.
-        """
-        self.Kp = Kp
-
-    def set_Kp(self, Ki):
-        """!
-        Sets the value of Ki to be part of self.
-        """
-        self.Ki = Ki
-
-    def set_Kp(self, Kd):
-        """!
-        Sets the value of Kd to be part of self.
-        """
-        self.Kd = Kd
-
-    def print_time(self):
-        """!
-        Prints the encoder's position along with the current time.
-        """
-        for i in range(len(self.times)):
-            print("{}, {}".format(self.times[i], self.positions[i]))
+    def track(self, errorin):
+        error = errorin
+        t = utime.ticks_ms()
+        # Setup track specific Kp, Ki, Kd
+        kp = 4.9
+        ki = .285
+        kd = kp/150
+        kp_con = 0
+        ki_con = 0
+        kd_con = 0
+        # Calculate Kp, Ki, Kd
+        kp_con = kp * error
+        ki_con += ki * error * (t - self.t_prev)
+        if self.t_prev != t:
+            kd_con = kd * (error - self.error_prev) / (t - self.t_prev)
+        else:
+            kd_con = 0
+        # # set Previous error and time variables
+        self.error_prev = error
+        self.t_prev = t
+        motor_actuation = kp_con + ki_con + kd_con
+        return motor_actuation
