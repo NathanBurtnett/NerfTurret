@@ -65,13 +65,14 @@ def yaw(shares):
         yield 0
 
 def flywheel(shares):
-    speedinput, errory = shares
+    speedperc, errory = shares
     flywheelL = Flywheel(pyb.Pin.board.PB8, 4, 3)
     flywheelU = Flywheel(pyb.Pin.board.PB9, 4, 4)
     while True:
         #print(speedinput.get())
-        flywheelU.set_speed(speedinput.get())
-        flywheelL.set_speed(speedinput.get())
+        pitch = errory.get()/16+1
+        flywheelU.set_percent(speedperc.get())
+        flywheelL.set_percent(speedperc.get())
         yield 0
 
 def firing_pin(shares):
@@ -113,7 +114,6 @@ def camera(shares):
                 continue  # ignore invalid value and continue
         yield 0
 
-
 button = pyb.Switch()
 button_pressed = False
 def button_callback():
@@ -139,15 +139,15 @@ if __name__ == "__main__":
 
     task_list = ct.TaskList()
     yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=1,
-                      period=20, profile=False, trace=False,
+                      period=30, profile=False, trace=False,
                       shares=(errorx, yawcon))
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
                            period=10, profile=True, trace=False,
                            shares=(speed, errory))
     task_list.append(flywheelTask)
-    firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
-                         period=100, profile=True, trace=False,
+    firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=2,
+                         period=200, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
     cameraTask = ct.Task(camera, name="Camera Controller", priority=1,
@@ -164,16 +164,17 @@ if __name__ == "__main__":
 
         # Main Duel Checks
         if button_pressed:
-        #     yawcon.put(1)
+            # yawcon.put(1)
             # print("Flywheel On")
-            speed.put(5)
+            speed.put(50)
         elif not button_pressed:
             # print("Flywheel Off")
-            speed.put(2)
+            speed.put(0)
         if current_time >= fire_time:
-            if .5 > errorx.get() > -.5:
+            if .1 > errorx.get() > -.1:
                 fire.put(1)
             fire_time = current_time + 1000
+
         # if current_time >= fire_time + 1000:
         #     yawcon.put(2)
         #     speed.put(1000)

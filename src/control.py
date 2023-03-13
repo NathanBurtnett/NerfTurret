@@ -77,9 +77,9 @@ class Control:
         error = errorin
         t = utime.ticks_ms()
         # Setup track specific Kp, Ki, Kd
-        kp = 2
-        ki = .1
-        kd = .000001
+        kp = 5
+        ki = .8
+        kd = .00009
         kp_con = 0
         ki_con = 0
         kd_con = 0
@@ -94,6 +94,7 @@ class Control:
         self.error_prev = error
         self.t_prev = t
         motor_actuation = kp_con + ki_con + kd_con
+        print(f"motor actuation {motor_actuation}")
         return motor_actuation
 
     # def tune(self, position, poserror):
