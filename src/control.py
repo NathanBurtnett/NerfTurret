@@ -29,6 +29,8 @@ class Control:
         self.Ki_control = 0
         self.Kd = Kd
         self.Kd_control = 0
+        self.Ku = 0
+        self.Tu = 0
         self.setpoint = setpoint
         self.output = initial_output
         self.times = []
@@ -75,8 +77,8 @@ class Control:
         error = errorin
         t = utime.ticks_ms()
         # Setup track specific Kp, Ki, Kd
-        kp = .05
-        ki = .175
+        kp = 2
+        ki = .1
         kd = .000001
         kp_con = 0
         ki_con = 0
@@ -94,64 +96,40 @@ class Control:
         motor_actuation = kp_con + ki_con + kd_con
         return motor_actuation
 
-def tune(self, position, error):
-    # simulate a process with a delay and some noise
-    return input_signal + 0.1 * (2 * random.random() - 1)
-    # initialize PID controller gains
-    Kp = 0.0
-    Ki = 0.0
-    Kd = 0.0
-    # initialize tuning parameters
-    Ku = 1.0
-    Tu = 1.0
-    alpha = 0.5
-    # initialize error and error integral
-    #error = 0.0
-    error_integral = 0.0
-    # initialize loop variables
-    last_time = time.time()
-    last_error = 0.0
-    motor_actuation = 0.0
-    # loop until the controller is tuned
-    while Kp == 0.0 or Ki == 0.0 or Kd == 0.0:
-        # calculate the elapsed time since the last loop iteration
-        current_time = time.time()
-        delta_time = current_time - last_time
-        # read the current input signal from the process function
-        input_signal = process_function(output_signal)
-        # calculate the error and error integral
-        error = input_signal - output_signal
-        error_integral += error * delta_time
-        # calculate the derivative term
-        if delta_time > 0:
-            error_derivative = (error - last_error) / delta_time
-        else:
-            error_derivative = 0.0
-        # calculate the output signal
-        output_signal = Kp * error + Ki * error_integral + Kd * error_derivative
-
-        # update last error and last time
-        last_error = error
-        last_time = current_time
-
-        # perform the Ziegler-Nichols tuning method
-        if output_signal > Ku:
-            if Kp == 0.0:
-                Kp = alpha * Ku / output_signal
-            elif Ki == 0.0:
-                Ki = 1.2 * Kp * Tu / (alpha * Tu + 2 * delta_time)
-            elif Kd == 0.0:
-                Kd = 0.5 * Kp * alpha * Tu / (alpha * Tu + delta_time)
-
-        # Calculate Kp, Ki, Kd
-        kp_con = kp * error
-        ki_con += ki * error * (t - self.t_prev)
-        if self.t_prev != t:
-            kd_con = kd * (error - self.error_prev) / (t - self.t_prev)
-        else:
-            kd_con = 0
-        # # set Previous error and time variables
-        self.error_prev = error
-        self.t_prev = t
-        motor_actuation = kp_con + ki_con + kd_con
-        return motor_actuation
+    # def tune(self, position, poserror):
+    #     t = utime.time()
+    #     self.kptuned = 0
+    #     self.kituned = 0
+    #     self.kdtuned = 0
+    #     I = 0
+    #
+    #     dt = (t-self.tprev)
+    #
+    #     P = self.kptuned * poserror
+    #     I += self.kituned * poserror * dt
+    #     if self.t_prev != t:
+    #         D = self.kdtuned * (poserror - self.error_prev) / dt
+    #     else:
+    #         D = 0
+    #
+    #     out = P + I + D
+    #
+    #     self.error_prev
+    #
+    #     if self.Ku == 0
+    #         self.kptuned += dt*10^(-3)
+    #         if abs(poserror) < abs(self.error_prev) and self.error_prev < 0:
+    #             self.Ku = self.kptuned / (4* abs(self.error_prev))
+    #             self.Tu = dt * 4
+    #             self.kptuned = 0
+    #
+    #     else:
+    #         self.kptuned = 0.6 * self.Ku
+    #         self.kituned = 1.2 * self.Ku / self.Tu
+    #         self.kdtuned = 0.075 * self.Ku * self.Tu
+    #
+    #     print(self.kptuned)
+    #     print(self.kituned)
+    #     print(self.kdtuned)
+    #     print(self.Ku)
+    #     print(self.Tu)

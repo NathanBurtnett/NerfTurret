@@ -166,7 +166,7 @@ if __name__ == "__main__":
         if button_pressed:
         #     yawcon.put(1)
             # print("Flywheel On")
-            speed.put(4)
+            speed.put(5)
         elif not button_pressed:
             # print("Flywheel Off")
             speed.put(2)
