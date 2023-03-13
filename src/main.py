@@ -19,14 +19,14 @@ import utime as time
 Pin Layout
 
 PA_10: Motor Driver Enable Pin
-PB_3: Flywheel 1 PWM TIM2_CH3
-PB_5: Flywheel 2 PWM TIM2_CH2
+PB8: Flywheel 1 PWM TIM4_CH3
+PB9: Flywheel 2 PWM TIM4_CH4
 PB_4: Motor Driver IN1PIN
 PB_5: Motor Driver IN2PIN
-PB_6: Encoder Pin A
-PB_7: Encoder Pin B
-PB_8: I2C SCL Camera
-PB_9: I2C SDA Camera
+PC_6: Encoder Pin A
+PC_7: Encoder Pin B
+PA0: Uart TX
+PA1: Uart RX
 PB_10: Servo PWM 
 """
 
@@ -43,6 +43,7 @@ def yaw(shares):
     yawencoder.zero()
     while True:
         measured_output = yawencoder.read()
+        motor_actuation = 0
         yield 0
         if yawcon.get() == 1:  # Turn 180
             con.set_setpoint(180)
@@ -59,16 +60,16 @@ def yaw(shares):
         elif yawcon.get() == 3:  # Track
             motor_actuation = con.track(errorx.get())
         # print(f"Motor Position: {measured_output}")
-        print(f"Motor Actuation: {motor_actuation}")
+        # print(f"Motor Actuation: {motor_actuation}")
         yawmotor.set_duty_cycle(motor_actuation)
         yield 0
 
 def flywheel(shares):
-    speedinput = shares
-    speedinput.put(1000)
-    flywheelU = Flywheel(pyb.Pin.board.PB3, 2, 2)
-    flywheelL = Flywheel(pyb.Pin.board.PB5,3, 2)
+    speedinput, errory = shares
+    flywheelL = Flywheel(pyb.Pin.board.PB8, 4, 3)
+    flywheelU = Flywheel(pyb.Pin.board.PB9, 4, 4)
     while True:
+        #print(speedinput.get())
         flywheelU.set_speed(speedinput.get())
         flywheelL.set_speed(speedinput.get())
         yield 0
@@ -113,6 +114,18 @@ def camera(shares):
         yield 0
 
 
+button = pyb.Switch()
+button_pressed = False
+def button_callback():
+    global button_pressed
+    if button_pressed:
+        print("Button Toggle Off")
+        button_pressed = False
+    else:
+        print("Button Toggle On")
+        button_pressed = True
+button.callback(button_callback)
+
 if __name__ == "__main__":
     # Create motor and encoder objects
     fire = ts.Share('l', thread_protect=False, name="Servo Actuation Flag")
@@ -123,40 +136,44 @@ if __name__ == "__main__":
     errorx = ts.Share('f', thread_protect=False, name="Camera x Error")
     errory = ts.Share('f', thread_protect=False, name="Camera y Error")
     buzzer = ts.Share('l', thread_protect=False, name="Speaker Sound")
-    button = ts.Share('b', thread_protect=False, name="Button Pressed")
 
     task_list = ct.TaskList()
-    yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=2,
-                      period=10, profile=False, trace=False,
+    yawTask = ct.Task(yaw, name="Yaw Motor Driver", priority=1,
+                      period=20, profile=False, trace=False,
                       shares=(errorx, yawcon))
     task_list.append(yawTask)
     flywheelTask = ct.Task(flywheel, name="Flywheel Motor Driver", priority=1,
-                           period=100, profile=True, trace=False,
-                           shares=(speed))
-    #task_list.append(flywheelTask)
+                           period=10, profile=True, trace=False,
+                           shares=(speed, errory))
+    task_list.append(flywheelTask)
     firingTask = ct.Task(firing_pin, name="Firing Servo Controller", priority=1,
                          period=100, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
     cameraTask = ct.Task(camera, name="Camera Controller", priority=1,
-                         period=10, profile=False, trace=False,
+                         period=1000/30, profile=False, trace=False,
                          shares=(errorx, errory))
     task_list.append(cameraTask)
 
     start_time = time.ticks_ms()
-    fire_time = start_time + 5000
+    fire_time = start_time + 3000
     yawcon.put(3)
     while True:
         task_list.pri_sched()
         current_time = time.ticks_ms()
 
         # Main Duel Checks
-        # if button.get() == 1:
+        if button_pressed:
         #     yawcon.put(1)
-        #     speed.put(1200)
-        # if current_time >= fire_time:
-        #     if .1 > errorx.get() > -.1:
-        #         fire.put(1)
+            # print("Flywheel On")
+            speed.put(4)
+        elif not button_pressed:
+            # print("Flywheel Off")
+            speed.put(2)
+        if current_time >= fire_time:
+            if .5 > errorx.get() > -.5:
+                fire.put(1)
+            fire_time = current_time + 1000
         # if current_time >= fire_time + 1000:
         #     yawcon.put(2)
         #     speed.put(1000)
