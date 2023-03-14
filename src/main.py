@@ -226,9 +226,10 @@ if __name__ == "__main__":
     task_list.append(cameraTask)
 
     start_time = time.ticks_ms()
-    fire_time = start_time + 3000
+    fire_time = start_time + 5000
     tuning_mode = False
     tuning_state = 0
+    shot = 0
 
     while True:
         task_list.pri_sched()
@@ -246,17 +247,12 @@ if __name__ == "__main__":
                 if button_pressed:
                     yawcon.put(1)
                     speed.put(75)
-            elif yawcon.get() == 1:
-                if 179 < yawencoder.read() < 181:
-                    yawcon.put(3)
             elif yawcon.get() == 3:
-                if -0.1 < errorx.get() < 0.1:
+                if -0.1 < errorx.get() < 0.1 and shot == 0:
                     fire.put(1)
-                if current_time >= fire_time:
+                    shot = 1
+                if current_time >= fire_time and shot == 1:
                     fire.put(1)
-                    fire_time = current_time + 5000
+                    shot = 2
                 if current_time >= fire_time + 2000:
                     yawcon.put(2)
-            elif yawcon.get() == 2:
-                if -1 < yawencoder.read() < 1:
-                    yawcon.put(0)
