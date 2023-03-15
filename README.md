@@ -1,4 +1,4 @@
-# Automated Nerf Turret
+# Automated Nerf Turret - Injury Imminent
 
 ## Introduction
 This project is an automated Nerf turret designed to track and engage targets using a thermal camera. The turret is equipped with PID controlled motors for precise aiming and features adjustable flywheels for ball pitching. It is intended for use in various settings, such as office environments, home security, or just for fun.
