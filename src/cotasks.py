@@ -69,7 +69,7 @@ def yaw(shares):
 
         yield 0
 
-def flywheel(shares, pitch_factor=0.2):
+def flywheel(shares):
     """!
     @brief Controls the speed of the flywheel motors and adjusts pitch based on y-axis error.
 
@@ -78,7 +78,6 @@ def flywheel(shares, pitch_factor=0.2):
     ball to pitch up or down based on the error.
 
     @param shares Tuple containing shared variables for flywheel base speed and y-axis error.
-    @param pitch_factor Scaling factor to control the pitch adjustment based on y-axis error.
     """
     speedperc, errory = shares
     flywheelL = Flywheel(pyb.Pin.board.PB8, 4, 3)
@@ -87,7 +86,7 @@ def flywheel(shares, pitch_factor=0.2):
     while True:
 
         base_speed = speedperc.get()
-        pitch = -pitch_factor * errory.get()
+        pitch = -settings.pitch_factor * errory.get()
 
         upper_speed = base_speed * (1 + pitch)
         lower_speed = base_speed * (1 - pitch)

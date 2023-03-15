@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     # Homing routine
     yaw_mode.put(4)
-    yaw_control.put(-75)
+    yaw_control.put(settings.home_speed)
     button_pressed = False
 
     while yaw_mode.get() != 0:
@@ -131,6 +131,7 @@ if __name__ == "__main__":
             speed.put(settings.arm_percent)
 
             if time.ticks_ms() - start_time > settings.pre_arm_time:
+                print("GOING INTO ACTIVE!!")
                 state = 3
                 yaw_mode.put(2)
                 yaw_control.put(settings.yaw_active)
@@ -140,12 +141,16 @@ if __name__ == "__main__":
             speed.put(settings.fire_percent)
             if yaw_mode.get() == 0:
                 # Slew to 180 finished.
+                print("GOING INTO TRACKING!!")
+
                 state = 4
 
         elif state == 4:  # TRACK
+            print("TRK ERR", errory.get(), errorx.get())
+
             if button_pressed:
                 button_pressed = False
-                print("TRK ERR", errory.get(), errorx.get())
+                print("GOING INTO IDLE!!")
                 yaw_mode.put(2)
                 yaw_control.put(settings.yaw_home)
                 state = 6
