@@ -36,7 +36,7 @@ We conducted several tests to evaluate the performance of the automated Nerf tur
 **Final Testing**: 
     We performed several end-to-end tests of the entire system to validate its functionality. These tests demonstrated that the turret could successfully track targets, adjust its aim, and fire Nerf balls with precision.
 
-    Overall, the automated Nerf turret performed well during the tests, with accurate targeting, responsive tracking, and adjustable pitching. Further improvements can be made to enhance the system's performance and adapt it to various use cases.
+Overall, the automated Nerf turret performed well during the tests, with accurate targeting, responsive tracking, and adjustable pitching. Further improvements can be made to enhance the system's performance and adapt it to various use cases.
 
 ## Lessons Learned and Recommendations
 Throughout the development of the automated Nerf turret, we encountered several challenges and gained valuable insights that could benefit future iterations or similar projects:
