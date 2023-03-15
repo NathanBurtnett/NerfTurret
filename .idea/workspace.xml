@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="521f5e65-23b4-4129-a9a6-33629e90dbf3" name="Changes" comment="" />
+    <list default="true" id="521f5e65-23b4-4129-a9a6-33629e90dbf3" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/cotasks.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/NerfTurret.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/NerfTurret.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/control.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/control.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/encoder_reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/encoder_reader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/flywheel_driver.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/flywheel_driver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/motor_driver.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/motor_driver.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -23,6 +33,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="MicroPythonDevices" devicePath="COM9" autoDetectDevicePath="false" clearReplOnLaunch="false" />
   <component name="ProjectId" id="2MSyHxQodHBPBt0ZXfT5A2nACKz" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -32,9 +43,52 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/jacob/OneDrive/Documents/Cal Poly/WInter 2023/ME 405/NerfTurret&quot;
+    &quot;last_opened_file_path&quot;: &quot;D:/Projects/NerfTurret&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.micropython.configurable&quot;
   }
 }</component>
+  <component name="RunManager" selected="MicroPython.Flash src">
+    <configuration name="Flash control.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/src/control.py" runReplOnSuccess="no">
+      <module name="NerfTurret" />
+      <method v="2">
+        <option name="MicroPython.StopREPL.Before.Run" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Flash cotasks.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/src/cotasks.py" runReplOnSuccess="no">
+      <module name="NerfTurret" />
+      <method v="2">
+        <option name="MicroPython.StopREPL.Before.Run" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Flash main.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/src/main.py" runReplOnSuccess="no">
+      <module name="NerfTurret" />
+      <method v="2">
+        <option name="MicroPython.StopREPL.Before.Run" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Flash settings.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/src/settings.py" runReplOnSuccess="no">
+      <module name="NerfTurret" />
+      <method v="2">
+        <option name="MicroPython.StopREPL.Before.Run" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Flash src" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/src" runReplOnSuccess="no">
+      <module name="NerfTurret" />
+      <method v="2">
+        <option name="MicroPython.StopREPL.Before.Run" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="MicroPython.Flash src" />
+        <item itemvalue="MicroPython.Flash settings.py" />
+        <item itemvalue="MicroPython.Flash control.py" />
+        <item itemvalue="MicroPython.Flash main.py" />
+        <item itemvalue="MicroPython.Flash cotasks.py" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -45,5 +99,16 @@
       <updated>1677775193243</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

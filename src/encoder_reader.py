@@ -4,6 +4,7 @@ Contains the EncoderReader class which is used to track the position of an
 encoder.
 """
 import pyb
+import utime
 
 ENC_MAX = 0xFFFF
 
@@ -27,7 +28,7 @@ class EncoderReader:
         self.tim = pyb.Timer(timer, prescaler=0, period=ENC_MAX)
         self.ch_1 = self.tim.channel(1, pyb.Timer.ENC_AB, pin=pa)
         self.ch_2 = self.tim.channel(2, pyb.Timer.ENC_AB, pin=pb)
-
+        self._delta = 0
     def read(self):
         """!
         Reads the encoder count on the passed encoder and allows
@@ -35,11 +36,11 @@ class EncoderReader:
         """
         # Previous count received from the encoder on the last read
         cnt = self.tim.counter()
+
         # Difference between the last read count (cnt) and the raw count
         delta = cnt - self.last_raw_cnt
 
         # Overflow max -> min
-
         if delta > ENC_MAX // 2:
             delta = ENC_MAX - delta
 
@@ -49,8 +50,12 @@ class EncoderReader:
 
         self.count += delta
         self.last_raw_cnt = cnt
+        self._delta = delta
 
         return self.count
+
+    def delta(self):
+        return self._delta
 
     def zero(self):
         """!

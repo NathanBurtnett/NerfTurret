@@ -39,7 +39,7 @@ class MotorDriver:
         to the motor to the given level. Positive values
         cause torque in one direction, negative values
         in the opposite direction.
-        @param level A signed integer holding the duty
+        @param level A float or integer holding the duty
                 cycle of the voltage sent to the motor
         """
         #
