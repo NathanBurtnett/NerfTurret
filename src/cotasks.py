@@ -157,7 +157,7 @@ def camera(shares):
     yaw_control, yaw_mode, cam_control_flag, errory, fire_flag = shares
     cam = pyb.UART(4, 115200, timeout=0)
 
-    con = Control(settings.tx_p, settings.tx_i, settings.tx_d, 0, 0)
+    con = Control(settings.tx_p, settings.tx_i, settings.tx_d, 0, 0, settled_e_thresh=settings.tx_settle_e, settled_d_thresh=settings.tx_settle_d)
 
     res = ""
     while True:
@@ -175,9 +175,16 @@ def camera(shares):
 
                 if cam_control_flag.get() == 1:
                     act = con.run(-x + settings.off_x)
+                    print("CAM CON", con.error, con.error_dot)
                     print("ACT", act)
                     yaw_mode.put(YAW_RAW_PWM)
                     yaw_control.put(act)
+
+                    if con.is_settled():
+                        fire_flag.put(1)
+                        cam_control_flag.put(0)
+                    else:
+                        fire_flag.put(0)
 
                 errory.put(y)
 

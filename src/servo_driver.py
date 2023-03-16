@@ -17,5 +17,5 @@ class Servo:
         self.is_set = True
 
     def back(self):
-        self.set_angle(85)
+        self.set_angle(75)
         self.is_set = False

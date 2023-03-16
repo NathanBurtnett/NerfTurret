@@ -13,6 +13,8 @@ through UART to the STM32 Nucleo board, which runs Micropython and the pyboard l
 
 # Imports
 import pyb
+import utime
+
 import cotask as ct
 import task_share as ts
 from encoder_reader import EncoderReader
@@ -122,43 +124,36 @@ if __name__ == "__main__":
 
             if time.ticks_ms() - start_time > settings.pre_arm_time:
                 print("GOING INTO ACTIVE!!")
+                start_time = time.ticks_ms()
+                state = 3
+                yaw_mode.put(cotasks.YAW_POSITION)
+                yaw_control.put(settings.yaw_active)
 
-                if settings.do_rotate:
-                    state = 3
-                    yaw_mode.put(cotasks.YAW_POSITION)
-                    yaw_control.put(settings.yaw_active)
-                else:
-                    cam_control_flag.put(1)
-                    yaw_mode.put(cotasks.YAW_POSITION)
-                    state = 4
 
         elif state == 3:  # ACTIVATE
             # print("ACTIVE")
             speed.put(settings.fire_percent)
-            if yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
+            if yaw_mode.get() == cotasks.YAW_POSITION_SETTLED and time.ticks_ms() - start_time > settings.track_delay:
                 print("GOING INTO TRACKING!!")
                 cam_control_flag.put(1)
-                yaw_mode.put(cotasks.YAW_POSITION)
+                yaw_mode.put(cotasks.YAW_RAW_PWM)
                 state = 4
 
         elif state == 4:  # POSITION
-            if cam_control_flag.get() == 0 and yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
+            if cam_control_flag.get() == 0:
                 print("GOING INTO FIRE MODE!!")
                 cam_control_flag.put(0)
+                yaw_mode.put(cotasks.YAW_IDLE)
+                start_time = utime.ticks_ms()
                 state = 5
 
-        elif state == 5:  # FIRE
-            if not main_button.value():
-                print("GOING INTO IDLE!!")
-                cam_control_flag.put(0)
-                if settings.do_rotate:
-                    yaw_mode.put(cotasks.YAW_POSITION)
-                    yaw_control.put(settings.yaw_home)
-                    state = 6
-                else:
-                    yaw_mode.put(cotasks.YAW_IDLE)
-                    yaw_control.put(0)
-                    state = 1
+        elif state == 5: # FIRE
+            fire.put(1)
+            if utime.ticks_ms() - start_time > 5000:
+                yaw_mode.put(cotasks.YAW_POSITION)
+                yaw_control.put(settings.yaw_home)
+                fire.put(0)
+                state = 6
 
         elif state == 6:  # RETURN
             if yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
