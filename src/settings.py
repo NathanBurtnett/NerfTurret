@@ -21,11 +21,11 @@ yaw_v_i = .05
 yaw_v_d = 0
 
 # track X settings
-tx_p = 7
-tx_i = .009
-tx_d = .2
-tx_settle_d = 3
-tx_settle_e = .1
+tx_p = 6
+tx_i = .012
+tx_d = .3
+tx_settle_d = 1
+tx_settle_e = .3
 off_x = -1.75
 track_delay = 5000
 
