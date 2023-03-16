@@ -39,22 +39,8 @@ PA1: Uart RX
 PB10: Servo PWM 
 """
 
-def button_callback():
-    """!
-    @brief Toggles the button_pressed flag and prints the state change message.
+main_button = pyb.Pin(pyb.Pin.board.PB3, pyb.Pin.IN, pull=pyb.Pin.PULL_UP)
 
-    This callback function changes the state of the button_pressed flag when the button is
-    pressed. It also prints a message to indicate the change in state.
-    """
-    global button_pressed
-
-    button_pressed = not button_pressed
-    print("Button Toggle", "On" if button_pressed else "Off")
-
-# Create and configure the button
-button = pyb.Switch()
-button_pressed = False
-button.callback(button_callback)
 
 if __name__ == "__main__":
     # Create motor and encoder objects
@@ -64,6 +50,7 @@ if __name__ == "__main__":
     speed = ts.Share('l', thread_protect=False, name="Flywheel Base Speed")
     errory = ts.Share('f', thread_protect=False, name="Camera y Error")
     buzzer = ts.Share('l', thread_protect=False, name="Speaker Sound")
+    cam_control_flag = ts.Share('l', thread_protect=False, name="Camera Control")
 
     task_list = ct.TaskList()
     yawTask = ct.Task(cotasks.yaw, name="Yaw Motor Driver", priority=1,
@@ -80,10 +67,11 @@ if __name__ == "__main__":
     task_list.append(firingTask)
     cameraTask = ct.Task(cotasks.camera, name="Camera Controller", priority=1,
                          period=1000/30, profile=False, trace=False,
-                         shares=(yaw_control, yaw_mode, errory, fire))
+                         shares=(yaw_control, yaw_mode, cam_control_flag, errory, fire))
     task_list.append(cameraTask)
 
     fire.put(0)
+    cam_control_flag.put(0)
     start_time = time.ticks_ms()
     fire_time = start_time + 5000
     state = 0
@@ -91,25 +79,28 @@ if __name__ == "__main__":
 
     print("SETUP COMPLETE! Starting... Press button to home.")
 
-    while not button_pressed:
+    while main_button.value():
         task_list.pri_sched()
 
     # Homing routine
-    yaw_mode.put(4)
+    yaw_mode.put(cotasks.YAW_HOME)
     yaw_control.put(settings.home_speed)
-    button_pressed = False
 
-    while yaw_mode.get() != 0:
+    while yaw_mode.get() != cotasks.YAW_RESET:
         task_list.pri_sched()
 
-    yaw_mode.put(2)
+    print("HOME DONE!")
+
+    yaw_mode.put(cotasks.YAW_POSITION)
     yaw_control.put(settings.yaw_home)
-    while yaw_mode.get() != 0:
+
+    while yaw_mode.get() != cotasks.YAW_POSITION_SETTLED:
         task_list.pri_sched()
 
     print("Homed! Starting control FSM. Press button to begin the duel!")
 
-    button_pressed = False
+    state = 0
+
     while True:
         task_list.pri_sched()
         current_time = time.ticks_ms()
@@ -120,49 +111,58 @@ if __name__ == "__main__":
         elif state == 1:  # IDLE
             # print("IDLE")
             speed.put(0)
-            if button_pressed:
+            if not main_button.value():
                 print("GOING INTO PRE-ACTIVE!!")
                 start_time = time.ticks_ms()
-                button_pressed = False
                 state = 2
 
         elif state == 2:  # PRE-ACTIVATE
-            #print("PRE-ACTIVE")
+            # print("PRE-ACTIVE")
             speed.put(settings.arm_percent)
 
             if time.ticks_ms() - start_time > settings.pre_arm_time:
                 print("GOING INTO ACTIVE!!")
-            if settings.do_rotate:
-                state = 3
-                yaw_mode.put(2)
-                yaw_control.put(settings.yaw_active)
-            else:
-                state = 4
-                yaw_mode.put(3)
-                yaw_control.put(0)
+
+                if settings.do_rotate:
+                    state = 3
+                    yaw_mode.put(cotasks.YAW_POSITION)
+                    yaw_control.put(settings.yaw_active)
+                else:
+                    cam_control_flag.put(1)
+                    yaw_mode.put(cotasks.YAW_POSITION)
+                    state = 4
 
         elif state == 3:  # ACTIVATE
             # print("ACTIVE")
             speed.put(settings.fire_percent)
-            if yaw_mode.get() == 0:
-                # Slew to 180 finished.
+            if yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
                 print("GOING INTO TRACKING!!")
-
+                cam_control_flag.put(1)
+                yaw_mode.put(cotasks.YAW_POSITION)
                 state = 4
 
-        elif state == 4:  # TRACK
-            if button_pressed:
+        elif state == 4:  # POSITION
+            if cam_control_flag.get() == 0 and yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
+                print("GOING INTO FIRE MODE!!")
+                cam_control_flag.put(0)
+                state = 5
+
+        elif state == 5:  # FIRE
+            if not main_button.value():
                 print("GOING INTO IDLE!!")
-                button_pressed = False
+                cam_control_flag.put(0)
                 if settings.do_rotate:
-                    yaw_mode.put(2)
+                    yaw_mode.put(cotasks.YAW_POSITION)
                     yaw_control.put(settings.yaw_home)
+                    state = 6
                 else:
-                    yaw_mode.put(0)
+                    yaw_mode.put(cotasks.YAW_IDLE)
                     yaw_control.put(0)
-                state = 6
+                    state = 1
 
         elif state == 6:  # RETURN
-            if yaw_mode.get() == 0:
+            if yaw_mode.get() == cotasks.YAW_POSITION_SETTLED:
+                yaw_mode.put(cotasks.YAW_IDLE)
+                yaw_control.put(0)
                 state = 1
 

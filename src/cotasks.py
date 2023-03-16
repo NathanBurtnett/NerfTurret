@@ -7,6 +7,14 @@ from servo_driver import Servo
 from flywheel_driver import Flywheel
 import utime as time
 import settings
+
+YAW_IDLE = 0
+YAW_RESET = 1
+YAW_POSITION = 2
+YAW_POSITION_SETTLED = 3
+YAW_RAW_PWM = 4
+YAW_HOME = 5
+
 def yaw(shares):
     """!
     @brief Controls the yaw motor and encoder for the Nerf turret.
@@ -28,47 +36,61 @@ def yaw(shares):
     con = Control(settings.yaw_p, settings.yaw_i, settings.yaw_d, setpoint=0, initial_output=0, settled_d_thresh=5, settled_e_thresh=200)
     con.set_setpoint(0)
 
+    vel_con = Control(settings.yaw_v_p, settings.yaw_v_i, settings.yaw_v_d, setpoint=0, initial_output=0, settled_d_thresh=5, settled_e_thresh=200)
+    con.set_setpoint(0)
+
     home_start = None
+    last_t = utime.ticks_ms()
 
     while True:
+
         measured_output = yaw_encoder.read()
+        t = utime.ticks_ms()
+        delta_t = t - last_t
         motor_actuation = 0
 
         # 0 = IDLE
-        if yaw_mode.get() == 0:
+        if yaw_mode.get() == YAW_IDLE:
             motor_actuation = 0
 
-        elif yaw_mode.get() == 1:  # DISABLE
+        elif yaw_mode.get() == YAW_RESET:  # DISABLE
             yaw_encoder.zero()
             motor_actuation = 0
 
-        elif yaw_mode.get() == 2:  # POSITIONAL CONTROL
+        elif yaw_mode.get() == YAW_POSITION or yaw_mode.get() == YAW_POSITION_SETTLED:  # POSITIONAL CONTROL
             con.set_setpoint(yaw_control.get())
             motor_actuation = con.run(measured_output)
             # print("ERR", con.error_prev)
             if con.is_settled():
-                yaw_mode.put(0)
+                yaw_mode.put(YAW_POSITION_SETTLED)
+            else:
+                yaw_mode.put(YAW_POSITION)
 
-        elif yaw_mode.get() == 3:  # PWM CONTROL
+        elif yaw_mode.get() == YAW_RAW_PWM:  # PWM CONTROL
             motor_actuation = yaw_control.get()
 
         # SOFT ENDSTOPS FOR MODES 0-3
-        if measured_output > settings.yaw_max and motor_actuation > 0:
-            motor_actuation = 0
-        elif measured_output < settings.yaw_min and motor_actuation < 0:
-            motor_actuation = 0
+        # if measured_output > settings.yaw_max and motor_actuation > 0:
+        #     motor_actuation = 0
+        # elif measured_output < settings.yaw_min and motor_actuation < 0:
+        #     motor_actuation = 0
 
         # HOME
-        if yaw_mode.get() == 4:  # HOME
+        if yaw_mode.get() == YAW_HOME:  # HOME
             home_start = home_start or utime.ticks_ms()
-            motor_actuation = yaw_control.get()
+            vel_con.set_setpoint(yaw_control.get())
+            motor_actuation = vel_con.run(yaw_encoder.delta() / delta_t)
 
             print("HOME", yaw_encoder.delta(), motor_actuation, utime.ticks_ms() - home_start)
+
             if yaw_encoder.delta() == 0 and utime.ticks_ms() - home_start > 1000:
                 home_start = None
                 yaw_encoder.zero()
-                yaw_mode.put(0)
+                yaw_mode.put(YAW_RESET)
+
         yaw_motor.set_duty_cycle(motor_actuation)
+
+        last_t = t
         yield 0
 
 def flywheel(shares):
@@ -132,37 +154,36 @@ def camera(shares):
 
     @param shares Tuple containing shared variables for x-axis and y-axis errors.
     """
-    yaw_control, yaw_mode, errory, fire_flag = shares
+    yaw_control, yaw_mode, cam_control_flag, errory, fire_flag = shares
     cam = pyb.UART(4, 115200, timeout=0)
 
-    con_x = Control(settings.tx_p, settings.tx_i, settings.tx_d, setpoint=0, initial_output=0, settled_e_thresh=settings.tx_settle_e, settled_d_thresh=settings.tx_settle_d)
-    con_x.set_setpoint(0)
+    con = Control(settings.tx_p, settings.tx_i, settings.tx_d, 0, 0)
 
+    res = ""
     while True:
         if cam.any():
-            response = cam.readline()
-            # Parse the response and split by comma
-            error_values = response.decode().strip().split(',')
-
-            if len(error_values) == 2:
-                try:
-                    x, y = float(error_values[0]), float(error_values[1])
-
-                    if -16 < x < 16 and yaw_mode.get() == 3:
-                        yaw_control.put(act := con_x.run(x + settings.off_x))
-                        print("TRACK PID", act, con_x.error, con_x.Kp_control, con_x.Ki_control, con_x.Kd_control)
-                    if -12 < y < 12:
-                        errory.put(y)
-                except ValueError:
-                    # Ignore invalid values and continue
-                    continue
-            else:
-                # Ignore invalid response format and continue
+            c = chr(cam.readchar())
+            if c != "\n":
+                res += c
                 continue
 
-            if yaw_mode.get() == 3 and con_x.is_settled():
-                fire_flag.put(1)
-            else:
-                fire_flag.put(0)
+            try:
+                # Parse the response and split by comma
+                # print(res)
+                x, y = res.strip().split(',')
+                x, y = float(x), float(y)
+
+                if cam_control_flag.get() == 1:
+                    act = con.run(-x + settings.off_x)
+                    print("ACT", act)
+                    yaw_mode.put(YAW_RAW_PWM)
+                    yaw_control.put(act)
+
+                errory.put(y)
+
+            except ValueError:
+                pass
+
+            res = ""
 
         yield 0

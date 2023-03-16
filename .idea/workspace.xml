@@ -8,9 +8,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/control.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/control.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cotasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/cotasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/encoder_reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/encoder_reader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/motor_driver.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/motor_driver.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/servo_driver.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/servo_driver.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -31,7 +30,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="MicroPythonDevices" devicePath="COM3" autoDetectDevicePath="false" clearReplOnLaunch="false" />
+  <component name="MicroPythonDevices" devicePath="COM9" />
   <component name="ProjectId" id="2MSyHxQodHBPBt0ZXfT5A2nACKz" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -81,8 +80,8 @@
       <list>
         <item itemvalue="MicroPython.Flash settings.py" />
         <item itemvalue="MicroPython.Flash cotasks.py" />
-        <item itemvalue="MicroPython.Flash control.py" />
         <item itemvalue="MicroPython.Flash main.py" />
+        <item itemvalue="MicroPython.Flash control.py" />
         <item itemvalue="MicroPython.Flash src" />
       </list>
     </recent_temporary>

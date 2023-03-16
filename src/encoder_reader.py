@@ -51,7 +51,6 @@ class EncoderReader:
         self.count += delta
         self.last_raw_cnt = cnt
         self._delta = delta
-
         return self.count
 
     def delta(self):
