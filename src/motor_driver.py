@@ -4,7 +4,7 @@ This file contains the code used to drive the motor at a
 specified percent power in a specified direction.
 """
 import pyb
-
+import settings
 
 class MotorDriver:
     """!

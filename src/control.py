@@ -5,8 +5,11 @@ to a position
 """
 import pyb
 import utime
-
+import math
 import settings
+
+# Converts 0-100 into a "real" 0-100 to control actual motor movement
+
 
 
 class Control:
@@ -15,7 +18,7 @@ class Control:
     initial conditions of the motor, calculates the error between
     current position and desired position, and returns the motor effort.
     """
-    def __init__(self, Kp, Ki, Kd, setpoint, initial_output, settled_e_thresh=200, settled_d_thresh=5):
+    def __init__(self, Kp, Ki, Kd, setpoint, initial_output, settled_e_thresh=.5, settled_d_thresh=.2):
         """!
         The initial state of the controller. Sets up the initial conditions of the
         passed through motor
@@ -68,14 +71,15 @@ class Control:
             self.Ki_control = 0
             self.delta_t = 0
 
-        self.error_dot = (self.error - self.error_prev) / (self.t - self.t_prev) if self.delta_t > 0 else 0
+        self.error_dot = 1000 * (self.error - self.error_prev) / (self.t - self.t_prev) if self.delta_t > 0 else 0
 
         self.Kp_control = self.Kp * self.error
-        self.Kd_control = self.Kd * self.error_dot
 
         # Anti-spool
         if -100 < self.Kp_control + self.Ki_control + self.Kp_control < 100:
             self.Ki_control += self.Ki * self.error * self.delta_t
+
+        self.Kd_control = self.Kd * self.error_dot
 
         self.error_prev = self.error
         self.t_prev = self.t
@@ -83,7 +87,7 @@ class Control:
         motor_actuation = self.Kp_control + self.Ki_control + self.Kd_control
 
         # print("PID OUT", motor_actuation, self.Kp_control, self.Ki_control, self.Kd_control)
-        return motor_actuation
+        return settings.linearize(motor_actuation)
 
     def set_setpoint(self, setpoint):
         """!
@@ -92,29 +96,5 @@ class Control:
         self.setpoint = setpoint
 
     def is_settled(self):
-        # print("CON_SETT", abs(self.error), abs(self.error_dot))
+        print("CON_SETT", abs(self.error), abs(self.error_dot))
         return abs(self.error) < self.settled_e_thresh and abs(self.error_dot) < self.settled_d_thresh
-
-    def track(self, errorin):
-        error = errorin
-        t = utime.ticks_ms()
-        # Setup track specific Kp, Ki, Kd
-        kp = 5
-        ki = .8
-        kd = .00009
-        kp_con = 0
-        ki_con = 0
-        kd_con = 0
-        # Calculate Kp, Ki, Kd
-        kp_con = kp * error
-        ki_con += ki * error * (t - self.t_prev)
-        if self.t_prev != t:
-            kd_con = kd * (error - self.error_prev) / (t - self.t_prev)
-        else:
-            kd_con = 0
-        # # set Previous error and time variables
-        self.error_prev = error
-        self.t_prev = t
-        motor_actuation = kp_con + ki_con + kd_con
-        print(f"motor actuation {motor_actuation}")
-        return motor_actuation

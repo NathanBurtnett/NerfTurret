@@ -62,28 +62,28 @@ if __name__ == "__main__":
     yaw_control = ts.Share('f', thread_protect=False, name="Input to yaw mode")
     yaw_mode = ts.Share('l', thread_protect=False, name="Yaw mode control") # Controls what mode yaw is in. 0=position, 1=position move finished, 2 = raw PWM control
     speed = ts.Share('l', thread_protect=False, name="Flywheel Base Speed")
-    errorx = ts.Share('f', thread_protect=False, name="Camera x Error")
     errory = ts.Share('f', thread_protect=False, name="Camera y Error")
     buzzer = ts.Share('l', thread_protect=False, name="Speaker Sound")
 
     task_list = ct.TaskList()
     yawTask = ct.Task(cotasks.yaw, name="Yaw Motor Driver", priority=1,
                       period=10, profile=False, trace=False,
-                      shares=(errorx, yaw_control, yaw_mode))
+                      shares=(yaw_control, yaw_mode))
     task_list.append(yawTask)
     flywheelTask = ct.Task(cotasks.flywheel, name="Flywheel Motor Driver", priority=1,
                            period=10, profile=True, trace=False,
                            shares=(speed, errory))
     task_list.append(flywheelTask)
     firingTask = ct.Task(cotasks.firing_pin, name="Firing Servo Controller", priority=2,
-                         period=200, profile=True, trace=False,
+                         period=300, profile=True, trace=False,
                          shares=fire)
     task_list.append(firingTask)
     cameraTask = ct.Task(cotasks.camera, name="Camera Controller", priority=1,
                          period=1000/30, profile=False, trace=False,
-                         shares=(errorx, errory))
+                         shares=(yaw_control, yaw_mode, errory, fire))
     task_list.append(cameraTask)
 
+    fire.put(0)
     start_time = time.ticks_ms()
     fire_time = start_time + 5000
     state = 0
@@ -132,9 +132,14 @@ if __name__ == "__main__":
 
             if time.ticks_ms() - start_time > settings.pre_arm_time:
                 print("GOING INTO ACTIVE!!")
+            if settings.do_rotate:
                 state = 3
                 yaw_mode.put(2)
                 yaw_control.put(settings.yaw_active)
+            else:
+                state = 4
+                yaw_mode.put(3)
+                yaw_control.put(0)
 
         elif state == 3:  # ACTIVATE
             # print("ACTIVE")
@@ -146,17 +151,16 @@ if __name__ == "__main__":
                 state = 4
 
         elif state == 4:  # TRACK
-            print("TRK ERR", errory.get(), errorx.get())
-
             if button_pressed:
-                button_pressed = False
                 print("GOING INTO IDLE!!")
-                yaw_mode.put(2)
-                yaw_control.put(settings.yaw_home)
+                button_pressed = False
+                if settings.do_rotate:
+                    yaw_mode.put(2)
+                    yaw_control.put(settings.yaw_home)
+                else:
+                    yaw_mode.put(0)
+                    yaw_control.put(0)
                 state = 6
-
-        elif state == 5:  # FIRE
-            pass
 
         elif state == 6:  # RETURN
             if yaw_mode.get() == 0:
