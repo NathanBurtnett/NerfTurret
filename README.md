@@ -8,21 +8,24 @@ The automated Nerf turret consists of the following hardware components:
 
 - STM32 Nucleo board with MicroPython and the pyboard library
 - Thermal camera for target tracking
-- One motors with PID control for turret yaw 
-- Two flywheels for launching Nerf balls
+- One motor with encoder and PID control for turret yaw 
+- Two 3D-printed brushless flywheels and ESCs for launching Nerf Rival balls
 - Servo for controlling the firing pin
-- Encoder for precise motor control
+- ESP32 for thermal camera processing
 - Various electronic components such as switches, resistors, capacitors, etc.
 
-image.png
+![Turret Image](IMG_20230315_005736.jpg)
 
 ## Software Design
 The software for the automated Nerf turret is written in MicroPython and utilizes tasks to manage different components of the system. It includes tasks for controlling the yaw motor, flywheels, firing pin, and camera tracking.
 
-Additionally, we developed a custom camera driver for the thermal camera using an ESP32 microcontroller and written in C++. This driver enables us to achieve a refresh rate of up to 35 fps, significantly higher than the initial 2 fps. To view the camera output in real-time and adjust parameters, we created a custom program in Rust.
+Additionally, we developed a custom camera driver for the thermal camera using an ESP32 microcontroller written in C++. This driver enables us to achieve a refresh rate of up to 35 fps, significantly higher than the initial 2 fps, in theory enabling real-time tracking. To view the camera output in real-time and adjust parameters, we created a custom program using the Tauri desktop app framework, with UI elements and
+control created using Svelte and Typescript. Debug communication between the ESP32 and computer (for image viewing and tuning) was done using the WebSerial API. 
 
-Communication between the ESP32 and the STM32 Nucleo board is established through a UART connection. This allows the Nucleo board to receive error values from the camera for target tracking and control.
+Communication between the ESP32 and the STM32 Nucleo board is established through a UART connection. This allows the Nucleo board to receive error values from the camera for target tracking and control in a simple
+CSV format.
 
+![State diagram](state_diagram.png)
 
 ## Results
 We conducted several tests to evaluate the performance of the automated Nerf turret:
@@ -41,7 +44,7 @@ Overall, the automated Nerf turret performed well during the tests, with accurat
 ## Lessons Learned and Recommendations
 Throughout the development of the automated Nerf turret, we encountered several challenges and gained valuable insights that could benefit future iterations or similar projects:
 
-**Tight belt for precise control**: We discovered that maintaining a tight belt in the yaw control system was essential for achieving precise target tracking. A loose belt introduced backlash and reduced the overall accuracy of the system. Ensuring proper belt tension should be a priority for future designs or modifications.
+**Tight belt for precise control**: We discovered that maintaining minimal backlash in the yaw control system was essential for achieving precise target tracking. A loose gearbox in the original design reduced the overall accuracy of the system and caused issues with PID. This backlash was remedied by replacing the original motor with a motor, belt, and encoder extracted from an inkjet printer.
 
 **Benefits of using ESP32**: Integrating the ESP32 microcontroller for the camera driver proved to be highly beneficial. Not only did it allow us to achieve a higher frame rate, but it also provided valuable experience in communication between different microcontrollers and working with multiple programming languages. This experience could be applied to other projects requiring seamless integration of various components.
 
@@ -51,3 +54,4 @@ By addressing these lessons learned and building upon our experiences, future it
 
 ## Additional Files
 (Provide links to additional files as appropriate, such as code files, images, videos, or other resources related to the project.)
+Camera Driver: https://github.com/DominicChm/mlx-viewer
