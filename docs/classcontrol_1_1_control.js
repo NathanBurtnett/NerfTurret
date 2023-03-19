@@ -1,0 +1,28 @@
+var classcontrol_1_1_control =
+[
+    [ "__init__", "classcontrol_1_1_control.html#a642702a88f6b9995e5685ec2c899c1ad", null ],
+    [ "is_settled", "classcontrol_1_1_control.html#a167d9f40c1e15d16aa0a5ce3abfc68f0", null ],
+    [ "run", "classcontrol_1_1_control.html#a2ccab79dd11fc2ffa6cbd103347a2574", null ],
+    [ "set_setpoint", "classcontrol_1_1_control.html#af57096d174749833cddb95fe4a37fb11", null ],
+    [ "delta_error", "classcontrol_1_1_control.html#a47a6e79c017ca55ff2485358bc3f2531", null ],
+    [ "delta_t", "classcontrol_1_1_control.html#a9a6d6724dba55ae794c970702a8a3173", null ],
+    [ "error", "classcontrol_1_1_control.html#acf7f7a287be8c987629d9624ebcfb87a", null ],
+    [ "error_dot", "classcontrol_1_1_control.html#a5d72a26378722fdf8256352c0647c536", null ],
+    [ "error_prev", "classcontrol_1_1_control.html#a7d2d31b5f9c9fe653a57a51bf0c70f46", null ],
+    [ "Kd", "classcontrol_1_1_control.html#a5137f44b3ab229e65dd7a12e3c518aaa", null ],
+    [ "Kd_control", "classcontrol_1_1_control.html#a5e6c3114f0f45e431fd51667b4297b8f", null ],
+    [ "Ki", "classcontrol_1_1_control.html#a3f9014fad07a68cf58fb9a11388964cf", null ],
+    [ "Ki_control", "classcontrol_1_1_control.html#a71c6f1ce7b5fb97c01c4a2ae28cf2a65", null ],
+    [ "Kp", "classcontrol_1_1_control.html#a757d39772c15f131919f766ca047c0fe", null ],
+    [ "Kp_control", "classcontrol_1_1_control.html#ab3b9567a3f98ce8b7f8e07c0aec90b99", null ],
+    [ "Ku", "classcontrol_1_1_control.html#a73c2f49c97a361df01dd53b68322e4bf", null ],
+    [ "output", "classcontrol_1_1_control.html#a2319b109ebd2987539e13d52f85e7740", null ],
+    [ "positions", "classcontrol_1_1_control.html#aa2d30ef6931d151d1917f3e8e13c33a7", null ],
+    [ "setpoint", "classcontrol_1_1_control.html#ad8b7475c09b46df94c751a099c1623f2", null ],
+    [ "settled_d_thresh", "classcontrol_1_1_control.html#a8d9ace6b480a51b2749c9a8cff55df83", null ],
+    [ "settled_e_thresh", "classcontrol_1_1_control.html#a9e6f5d142e340acea2d5116dfdecfb8b", null ],
+    [ "t", "classcontrol_1_1_control.html#a62f1e67182a8a812c779d4e2fa073db0", null ],
+    [ "t_prev", "classcontrol_1_1_control.html#a5e9f4b4a1e308b8e6907376ba12d5ed9", null ],
+    [ "times", "classcontrol_1_1_control.html#a59f1c36de52f3caf76ccc290edcae3e0", null ],
+    [ "Tu", "classcontrol_1_1_control.html#a578931db842ff1cde0a78d608159f644", null ]
+];
