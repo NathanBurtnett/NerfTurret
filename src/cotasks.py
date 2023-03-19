@@ -69,11 +69,6 @@ def yaw(shares):
         elif yaw_mode.get() == YAW_RAW_PWM:  # PWM CONTROL
             motor_actuation = yaw_control.get()
 
-        # SOFT ENDSTOPS FOR MODES 0-3
-        # if measured_output > settings.yaw_max and motor_actuation > 0:
-        #     motor_actuation = 0
-        # elif measured_output < settings.yaw_min and motor_actuation < 0:
-        #     motor_actuation = 0
 
         # HOME
         if yaw_mode.get() == YAW_HOME:  # HOME

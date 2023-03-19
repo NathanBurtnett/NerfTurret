@@ -96,5 +96,7 @@ class Control:
         self.setpoint = setpoint
 
     def is_settled(self):
+        """!
+        Returns the error less than the error threshold to let the machine know it is settled"""
         # print("CON_SETT", abs(self.error), abs(self.error_dot))
         return abs(self.error) < self.settled_e_thresh and abs(self.error_dot) < self.settled_d_thresh

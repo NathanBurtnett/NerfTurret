@@ -44,32 +44,16 @@ yaw_active = 195 * deg_fac # 185 * deg_fac
 yaw_home = 5 * deg_fac
 
 home_speed = -20
-# def linearize(actuation):
-#     if actuation == 0:
-#         return 0
-#
-#     return abs(actuation) / actuation * (20 + 20 * math.pow(abs(actuation),  .3))
-
-# def linearize(actuation):
-#     return abs(actuation) / actuation * max(abs(actuation), 26)
-
-# def linearize(actuation):
-#     a1 = 5
-#     s1 = 9
-#     s2 = 28
-#     sign = abs(actuation) / actuation if actuation != 0 else 1
-#     a = abs(actuation)
-#
-#     if a > a1:
-#         a = s2 + (a - a1) / (100 - a1) * (100 - s2)
-#
-#     else:
-#         a = s1 * a / a1
-#
-#     return a * sign
 
 
 def linearize(actuation):
+    """!
+    @brief: This function takes in the motor actuation term created from the control file
+    and puts the value through a linearization function for PID control use.
+
+    @param: actuation: The motor actuation used for PID control through PWM
+
+    return: The corrected motor actuation."""
     sign = abs(actuation) / actuation if actuation != 0 else 1
     a = abs(actuation)
 
